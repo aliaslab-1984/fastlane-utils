@@ -74,13 +74,13 @@ check_artifactory_response() {
   fi
 }
 
-while getopts ":a:c:" opt; do
+while getopts ":c:f:" opt; do
   case $opt in
-    a)
-      ARCHIVE_PATH=$OPTARG
-      ;;
     c)
       CONFIG_FILE_PATH=$OPTARG
+      ;;
+    f)
+      FRAMEWORK_PATH=$OPTARG
       ;;
     \?)
       echo "Invalid option: -$OPTARG" >&2
@@ -98,8 +98,8 @@ if [ -z "$CONFIG_FILE_PATH" ]; then
   exit 1
 fi
 
-if [ -z "$ARCHIVE_PATH" ]; then
-  echo "Missing archive path: specify it with -a option"
+if [ -z "$FRAMEWORK_PATH" ]; then
+  echo "Missing framework path: specify it with -f option"
   exit 1
 fi
 
@@ -110,7 +110,6 @@ ARTIFACTORY_PASSWORD=$(require_gradle_property "artifactoryPassword") || exit $?
 echo "Artifactory credentials retrieved successfully"
 
 FRAMEWORK_NAME=$(require_property "$CONFIG_FILE_PATH" "frameworkName") || exit $?
-FRAMEWORK_PATH="$ARCHIVE_PATH/Products/Library/Frameworks/"
 FRAMEWORK_FILE=$FRAMEWORK_PATH$FRAMEWORK_NAME.framework
 ZIPPED_FRAMEWORK_FILE="$(pwd)/$FRAMEWORK_NAME.framework.zip"
 
