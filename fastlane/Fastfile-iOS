@@ -40,10 +40,9 @@ platform :ios do
 
   desc "Publishes the SDK framework to Artifactory"
   lane :deploy_framework do |options|
-    script_path = options[:script_path]
     config_path = options[:config_path]
     archive_path = options[:archive_path]
-    sh "\"#{script_path}\" -c \"#{config_path}\" -a \"#{archive_path}\""
+    sh "curl https://raw.githubusercontent.com/aliaslab-1984/fastlane-utils/master/artifactory_publish.sh | bash -s -- -c \"#{config_path}\" -a \"#{archive_path}\""
   end
 
   desc "Rebuilds the framework and publishes it to Artifactory"
@@ -51,6 +50,6 @@ platform :ios do
     config_path = options[:config_path]
     scheme_name = sh("cat \"#{config_path}\" | grep scheme | cut -d= -f2 | tr -d '\n'")
     archive_path = archive(workspace: options[:workspace], scheme:scheme_name)
-    deploy_framework(script_path:options[:script_path], config_path:config_path, archive_path:archive_path)
+    deploy_framework(config_path:config_path, archive_path:archive_path)
   end
 end
