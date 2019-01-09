@@ -1,0 +1,56 @@
+# This file contains the fastlane.tools configuration
+# You can find the documentation at https://docs.fastlane.tools
+#
+# For a list of all available actions, check out
+#
+#     https://docs.fastlane.tools/actions
+#
+# For a list of all available plugins, check out
+#
+#     https://docs.fastlane.tools/plugins/available-plugins
+#
+
+# Uncomment the line if you want fastlane to automatically update itself
+# update_fastlane
+
+default_platform(:ios)
+
+platform :ios do
+  desc "Bootstraps dependencies"
+  lane :bootstrap do |options|
+    Dir.chdir(options[:project_directory]) do
+      sh "rome download --platform iOS"
+      sh "rome list --missing --platform iOS | awk '{print $1}' | xargs carthage bootstrap --platform iOS --cache-builds"
+      sh "rome list --missing --platform iOS | awk '{print $1}' | xargs rome upload --platform iOS"
+    end
+  end
+
+  desc "Runs tests"
+  lane :test do |options|
+    scan(workspace: options[:workspace], scheme: options[:scheme])
+    Dir.chdir(options[:project_directory]) do
+      sh "slather coverage"
+    end
+  end
+
+  desc "Builds and archives the specified scheme"
+  lane :archive do |options|
+    gym(workspace: options[:workspace], scheme: options[:scheme], skip_package_ipa: true)
+  end
+
+  desc "Publishes the SDK framework to Artifactory"
+  lane :deploy_framework do |options|
+    script_path = options[:script_path]
+    config_path = options[:config_path]
+    archive_path = options[:archive_path]
+    sh "\"#{script_path}\" -c \"#{config_path}\" -a \"#{archive_path}\""
+  end
+
+  desc "Rebuilds the framework and publishes it to Artifactory"
+  lane :build_deploy_framework do |options|
+    config_path = options[:config_path]
+    scheme_name = sh("cat \"#{config_path}\" | grep scheme | cut -d= -f2 | tr -d '\n'")
+    archive_path = archive scheme:scheme_name
+    deploy_framework(script_path:options[:script_path], config_path:config_path, archive_path:archive_path)
+  end
+end
