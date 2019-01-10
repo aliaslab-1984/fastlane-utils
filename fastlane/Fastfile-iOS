@@ -48,8 +48,9 @@ platform :ios do
   desc "Rebuilds the framework and publishes it to Artifactory"
   lane :build_deploy_framework do |options|
     config_path = options[:config_path]
-    scheme_name = sh("cat \"#{config_path}\" | grep scheme | cut -d= -f2 | tr -d '\n'")
-    archive_path = archive(workspace: options[:workspace], scheme:scheme_name)
+    workspace = sh("cat \"#{config_path}\" | grep workspace | cut -d= -f2 | tr -d '\n'")
+    scheme = sh("cat \"#{config_path}\" | grep scheme | cut -d= -f2 | tr -d '\n'")
+    archive_path = archive(workspace: workspace, scheme:scheme)
     deploy_framework(config_path:config_path, framework_path:archive_path + "/Products/Library/Frameworks/")
   end
 end
