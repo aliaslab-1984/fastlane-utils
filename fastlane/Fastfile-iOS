@@ -48,10 +48,16 @@ platform :ios do
 
   desc "Rebuilds the framework and publishes it to Artifactory"
   lane :build_deploy_framework do |options|
-    config_path = options[:config_path]
+    config_path = "../#{get_artifactory_config(config_name: options[:config_name])}"
     scheme = sh("cat \"#{config_path}\" | grep scheme | cut -d= -f2 | tr -d '\n'")
     archive_path = archive(scheme:scheme)
     deploy_framework(config_path:config_path, framework_path:archive_path + "/Products/Library/Frameworks/")
+  end
+
+  private_lane :get_artifactory_config do |options|
+    Dir.chdir("..") do
+      sh "find . -name \"#{options[:config_name]}.properties\" | tr -d '\n'"
+    end
   end
 
   private_lane :get_main_workspace do
