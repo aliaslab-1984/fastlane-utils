@@ -17,8 +17,9 @@ default_platform(:ios)
 
 platform :ios do
   desc "Bootstraps dependencies"
-  lane :bootstrap do |options|
-    Dir.chdir(options[:project_directory]) do
+  lane :bootstrap do
+    project_directory = sh "find .. -name Cartfile -not -path \"*Carthage/*\" -exec dirname {} \\; | tr -d '\n'"
+    Dir.chdir(project_directory) do
       sh "rome download --platform iOS"
       sh "rome list --missing --platform iOS | awk '{print $1}' | xargs carthage bootstrap --platform iOS --cache-builds"
       sh "rome list --missing --platform iOS | awk '{print $1}' | xargs rome upload --platform iOS"
