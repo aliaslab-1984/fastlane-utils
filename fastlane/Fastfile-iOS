@@ -28,7 +28,7 @@ platform :ios do
 
   desc "Runs tests"
   lane :test do |options|
-    scan(workspace: options[:workspace], scheme: options[:scheme])
+    scan(workspace: get_main_workspace, scheme: options[:scheme])
     Dir.chdir(options[:project_directory]) do
       sh "slather coverage"
     end
@@ -36,7 +36,7 @@ platform :ios do
 
   desc "Builds and archives the specified scheme"
   lane :archive do |options|
-    gym(workspace: options[:workspace], scheme: options[:scheme], skip_package_ipa: true)
+    gym(workspace: get_main_workspace, scheme: options[:scheme], skip_package_ipa: true)
   end
 
   desc "Publishes the SDK framework to Artifactory"
@@ -49,9 +49,14 @@ platform :ios do
   desc "Rebuilds the framework and publishes it to Artifactory"
   lane :build_deploy_framework do |options|
     config_path = options[:config_path]
-    workspace = sh("cat \"#{config_path}\" | grep workspace | cut -d= -f2 | tr -d '\n'")
     scheme = sh("cat \"#{config_path}\" | grep scheme | cut -d= -f2 | tr -d '\n'")
-    archive_path = archive(workspace: workspace, scheme:scheme)
+    archive_path = archive(scheme:scheme)
     deploy_framework(config_path:config_path, framework_path:archive_path + "/Products/Library/Frameworks/")
+  end
+
+  private_lane :get_main_workspace do
+    Dir.chdir("..") do
+      sh "find . -name \"*.xcworkspace\" -not -path \"*Carthage*\" -and -not -path \"*xcodeproj*\" | tr -d '\n'"
+    end
   end
 end
