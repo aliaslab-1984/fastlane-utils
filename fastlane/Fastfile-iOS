@@ -56,7 +56,7 @@ platform :ios do
 
   private_lane :get_artifactory_config do |options|
     Dir.chdir("..") do
-      sh "find . -name \"#{options[:config_name]}.properties\" | tr -d '\n'"
+      sh "find . -name \"#{options[:config_name]}\" | tr -d '\n'"
     end
   end
 
