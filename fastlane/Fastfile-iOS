@@ -51,7 +51,7 @@ platform :ios do
     config_path = "../#{get_artifactory_config(config_name: options[:config_name])}"
     scheme = sh("cat \"#{config_path}\" | grep scheme | cut -d= -f2 | tr -d '\n'")
     archive_path = archive(scheme:scheme)
-    deploy_framework(config_path:config_path, framework_path:archive_path + "/Products/Library/Frameworks/")
+    deploy_framework(config_path:config_path, framework_path:archive_path + "/Products/Library/Frameworks")
   end
 
   private_lane :get_artifactory_config do |options|
