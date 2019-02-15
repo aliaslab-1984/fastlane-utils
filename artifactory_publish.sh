@@ -110,12 +110,7 @@ ARTIFACTORY_PASSWORD=$(require_gradle_property "artifactoryPassword") || exit $?
 echo "Artifactory credentials retrieved successfully"
 
 FRAMEWORK_NAME=$(require_property "$CONFIG_FILE_PATH" "frameworkName") || exit $?
-FRAMEWORK_FILE=$FRAMEWORK_PATH/$FRAMEWORK_NAME-Universal.framework
-if [ ! -d "$FRAMEWORK_FILE" ]; then
-  echo "Universal framework not available"
-  FRAMEWORK_FILE=$FRAMEWORK_PATH/$FRAMEWORK_NAME.framework
-fi
-
+FRAMEWORK_FILE=$FRAMEWORK_PATH/$FRAMEWORK_NAME.framework
 ZIPPED_FRAMEWORK_FILE="$(pwd)/$FRAMEWORK_NAME.framework.zip"
 echo "Zipping framework at $FRAMEWORK_FILE into $ZIPPED_FRAMEWORK_FILE"
 zip_framework "$ZIPPED_FRAMEWORK_FILE" "$FRAMEWORK_PATH" "$FRAMEWORK_NAME" || exit $?
