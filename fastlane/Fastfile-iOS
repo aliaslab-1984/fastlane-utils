@@ -20,6 +20,9 @@ platform :ios do
   lane :bootstrap do
     project_directory = sh "find .. -name Cartfile -not -path \"*Carthage/*\" -exec dirname {} \\; | tr -d '\n'"
     Dir.chdir(project_directory) do
+      if File.readlines("Cartfile.private").grep(/Cuckoo/).size > 0
+        sh "carthage checkout Cuckoo"
+      end
       sh "rome download --platform iOS"
       sh "rome list --missing --platform iOS | awk '{print $1}' | xargs carthage bootstrap --platform iOS --cache-builds"
       sh "rome list --missing --platform iOS | awk '{print $1}' | xargs rome upload --platform iOS"
