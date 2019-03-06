@@ -29,6 +29,17 @@ platform :ios do
     end
   end
 
+  desc "Runs SwiftLint"
+  lane :lint do |options|
+    swiftlint(
+      mode: :lint,
+      path: options[:project_directory],
+      output_file: options[:project_directory] + "/swiftlint-results.xml",
+      reporter: "checkstyle",
+      config_file: ".swiftlint.yml"
+    )
+  end
+
   desc "Runs tests"
   lane :test do |options|
     scan(workspace: get_main_workspace, scheme: options[:scheme])
