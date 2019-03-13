@@ -43,7 +43,7 @@ platform :ios do
   desc "Runs tests"
   lane :test do |options|
     clear_derived_data
-    scan(workspace: get_main_workspace, scheme: options[:scheme])
+    scan(workspace: get_main_workspace, scheme: options[:scheme], clean: true)
     Dir.chdir(options[:project_directory]) do
       sh "slather coverage"
     end
