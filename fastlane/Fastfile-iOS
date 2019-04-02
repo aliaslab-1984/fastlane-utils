@@ -51,7 +51,7 @@ platform :ios do
       derived_data_path: derived_data_path)
     xccov_report_file = "xccov_report.json"
     conversion_script = "converter.swift"
-    sh "curl https://gist.githubusercontent.com/dmazzoni/78aca4d7e1646d342b5ada5e43c85dc8/raw/d8a7ae242e14d343ded1e000ea31466757c95542/xccov-json-to-cobertura-xml.swift > #{conversion_script}; chmod +x #{conversion_script}"
+    sh "curl https://raw.githubusercontent.com/aliaslab-1984/fastlane-utils/xccov/xccov_converter.swift > #{conversion_script}; chmod +x #{conversion_script}"
     sh "xcrun xccov view #{"../\"" + derived_data_path + "\"/Logs/Test/*.xcresult/*_Test/*.xccovreport"} --json > #{xccov_report_file}"
     sh "./#{conversion_script} #{xccov_report_file} > cobertura_report.xml"
   end
