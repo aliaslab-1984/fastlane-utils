@@ -53,7 +53,7 @@ platform :ios do
     conversion_script = "converter.swift"
     sh "curl https://raw.githubusercontent.com/aliaslab-1984/fastlane-utils/xccov/xccov_converter.swift > #{conversion_script}; chmod +x #{conversion_script}"
     sh "xcrun xccov view #{"../\"" + derived_data_path + "\"/Logs/Test/*.xcresult/*_Test/*.xccovreport"} --json > #{xccov_report_file}"
-    sh "./#{conversion_script} #{xccov_report_file} > cobertura_report.xml"
+    sh "./#{conversion_script} #{xccov_report_file} -targetsToInclude #{options[:coverage_target]} > cobertura_report.xml"
   end
 
   desc "Builds and archives the specified scheme"
