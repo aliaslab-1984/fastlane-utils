@@ -42,11 +42,18 @@ platform :ios do
 
   desc "Runs tests"
   lane :test do |options|
-    clear_derived_data
-    scan(workspace: get_main_workspace, scheme: options[:scheme], clean: true)
-    Dir.chdir(options[:project_directory]) do
-      sh "slather coverage"
-    end
+    derived_data_path = options[:project_directory] + "/Build/"
+    clear_derived_data(derived_data_path: derived_data_path)
+    scan(workspace: get_main_workspace,
+      scheme: options[:scheme],
+      clean: true,
+      code_coverage: true,
+      derived_data_path: derived_data_path)
+    xccov_report_file = "xccov_report.json"
+    conversion_script = "converter.swift"
+    sh "curl https://gist.githubusercontent.com/dmazzoni/78aca4d7e1646d342b5ada5e43c85dc8/raw/d8a7ae242e14d343ded1e000ea31466757c95542/xccov-json-to-cobertura-xml.swift > #{conversion_script}; chmod +x #{conversion_script}"
+    sh "xcrun xccov view #{"../\"" + derived_data_path + "\"/Logs/Test/*.xcresult/*_Test/*.xccovreport"} --json > #{xccov_report_file}"
+    sh "./#{conversion_script} #{xccov_report_file} > cobertura_report.xml"
   end
 
   desc "Builds and archives the specified scheme"
