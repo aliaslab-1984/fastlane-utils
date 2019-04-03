@@ -1,4 +1,4 @@
-#!/usr/bin/env xcrun swift
+#!/usr/bin/swift sh
 
 /**
  Original script can be found at:
@@ -6,6 +6,7 @@
  */
 
 import Foundation
+import Utility // https://github.com/apple/swift-package-manager.git ~> 0.3.0
 
 extension String {
     func contains(elementOfArray: [String]) -> Bool {
@@ -162,51 +163,33 @@ func generateCoberturaReport(from coverageReport: CoverageReport, targetsToInclu
     return doc.xmlString(options: [.nodePrettyPrint])
 }
 
-// This script should be called with at least 1 parameter
-if CommandLine.arguments.count < 2 {
-    exit(0)
-}
+let arguments = Array(ProcessInfo.processInfo.arguments.dropFirst())
+let parser = ArgumentParser(usage: "<options>", overview: "Converts xccov reports to Cobertura XML")
 
-// First parameter should be the file path of the xccov generated json file
-let filePath = CommandLine.arguments[1]
+let jsonReportPathArg = parser.add(option: "--input", shortName: "-i", kind: String.self, usage: "Path to the JSON xccov report")
+let targetsToIncludeArg = parser.add(option: "--targetsToInclude", shortName: "-t", kind: [String].self, usage: "List of targets to include in the coverage report")
+let packagesToExcludeArg = parser.add(option: "--packagesToExclude", shortName: "-p", kind: [String].self, usage: "List of packages to exclude from the coverage report")
 
-let targetsToIncludeKey = "-targetsToInclude"
-let packagesToExcludeKey = "-packagesToExclude"
+let parsedArguments = try parser.parse(arguments)
 
-var targetsToInclude = [String]()
-var packagesToExclude = [String]()
-
-if CommandLine.arguments.count > 2 {
-    let parameters = Array(CommandLine.arguments[2..<CommandLine.arguments.count])
-    
-    let targetsKeyIndex = parameters.firstIndex(of: targetsToIncludeKey)
-    let packagesKeyIndex = parameters.firstIndex(of: packagesToExcludeKey)
-    
-    switch (targetsKeyIndex, packagesKeyIndex) {
-    case let (.some(targetsIndex), .some(packagesIndex)) where targetsIndex < packagesIndex:
-        targetsToInclude.append(contentsOf: parameters[targetsIndex + 1..<packagesIndex])
-        packagesToExclude.append(contentsOf: parameters[packagesIndex + 1..<parameters.count])
-    case let (.some(targetsIndex), .some(packagesIndex)) where targetsIndex > packagesIndex:
-        targetsToInclude.append(contentsOf: parameters[packagesIndex + 1..<targetsIndex])
-        packagesToExclude.append(contentsOf: parameters[targetsIndex + 1..<parameters.count])
-    case let (.some(targetsIndex), .none):
-        targetsToInclude.append(contentsOf: parameters[targetsIndex + 1..<parameters.count])
-    case let (.none, .some(packagesIndex)):
-        packagesToExclude.append(contentsOf: parameters[packagesIndex + 1..<parameters.count])
-    default:
-        break
-    }
+guard let jsonReportPath = parsedArguments.get(jsonReportPathArg) else {
+    print("Missing JSON xccov report path")
+    exit(1)
 }
 
 // Trying to get the JSON String from the input parameter filePath
-guard let json = try? String(contentsOfFile: filePath, encoding: .utf8), let data = json.data(using: .utf8) else {
-    exit(0)
+guard let json = try? String(contentsOfFile: jsonReportPath, encoding: .utf8), let data = json.data(using: .utf8) else {
+    print("Cannot read content of \(jsonReportPath)")
+    exit(1)
 }
 
 // Trying to decode the JSON into CoverageReport structure
 guard let report = try? JSONDecoder().decode(CoverageReport.self, from: data) else {
-    exit(0)
+    print("Invalid input format")
+    exit(1)
 }
 
+let targetsToInclude = parsedArguments.get(targetsToIncludeArg) ?? []
+let packagesToExclude = parsedArguments.get(packagesToExcludeArg) ?? []
 let coberturaReport = generateCoberturaReport(from: report, targetsToInclude: targetsToInclude, packagesToExclude: packagesToExclude)
 print("\(coberturaReport)")
