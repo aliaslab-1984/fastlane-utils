@@ -49,11 +49,14 @@ platform :ios do
       clean: true,
       code_coverage: true,
       derived_data_path: derived_data_path)
-    xccov_report_file = "xccov_report.json"
-    conversion_script = "converter.swift"
-    sh "curl https://raw.githubusercontent.com/aliaslab-1984/fastlane-utils/master/xccov_converter.swift > #{conversion_script}; chmod +x #{conversion_script}"
-    sh "xcrun xccov view #{"../\"" + derived_data_path + "\"/Logs/Test/*.xcresult/*_Test/*.xccovreport"} --json > #{xccov_report_file}"
-    sh "./#{conversion_script} #{xccov_report_file} -targetsToInclude #{options[:coverage_target]} > cobertura_report.xml"
+    conversion_script = "fastlane/converter.swift"
+    xccov_report_file = "fastlane/xccov_report.json"
+    cobertura_report_file = "fastlane/cobertura_report.xml"
+    Dir.chdir("..") do
+      sh "curl https://raw.githubusercontent.com/aliaslab-1984/fastlane-utils/master/xccov_converter.swift > #{conversion_script}; chmod +x #{conversion_script}"
+      sh "xcrun xccov view #{"\"" + derived_data_path + "\"/Logs/Test/*.xcresult/*_Test/*.xccovreport"} --json > #{xccov_report_file}"
+      sh "./#{conversion_script} #{xccov_report_file} -targetsToInclude #{options[:coverage_target]} > #{cobertura_report_file}"
+    end
   end
 
   desc "Builds and archives the specified scheme"
