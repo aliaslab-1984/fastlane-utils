@@ -53,7 +53,7 @@ platform :ios do
     xccov_report_file = "fastlane/xccov_report.json"
     cobertura_report_file = "fastlane/cobertura_report.xml"
     Dir.chdir("..") do
-      working_directory = sh "pwd | tr -d '\n'"
+      working_directory = sh "pwd | sed -e \"s/^\\/private//\" | tr -d '\n'"
       sh "curl https://raw.githubusercontent.com/aliaslab-1984/fastlane-utils/master/xccov_converter.swift > #{conversion_script}; chmod +x #{conversion_script}"
       sh "xcrun xccov view #{"\"" + derived_data_path + "\"/Logs/Test/*.xcresult/*_Test/*.xccovreport"} --json > #{xccov_report_file}"
       sh "./#{conversion_script} -i #{xccov_report_file} -d \"#{working_directory}\" -t #{options[:coverage_target]} > #{cobertura_report_file}"
