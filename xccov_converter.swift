@@ -57,8 +57,7 @@ struct CoverageReport: Codable {
     let coveredLines: Int
 }
 
-func generateCoberturaReport(from coverageReport: CoverageReport, targetsToInclude: [String], packagesToExclude: [String]) -> String {
-    let currentDirectoryPath = FileManager.default.currentDirectoryPath
+func generateCoberturaReport(from coverageReport: CoverageReport, targetsToInclude: [String], packagesToExclude: [String], workingDirectory: String) -> String {
     
     let dtd = try! XMLDTD(contentsOf: URL(string: "http://cobertura.sourceforge.net/xml/coverage-04.dtd")!)
     dtd.name = "coverage"
@@ -82,7 +81,7 @@ func generateCoberturaReport(from coverageReport: CoverageReport, targetsToInclu
     
     let sourceElement = XMLElement(name: "sources")
     rootElement.addChild(sourceElement)
-    sourceElement.addChild(XMLElement(name: "source", stringValue: currentDirectoryPath))
+    sourceElement.addChild(XMLElement(name: "source", stringValue: workingDirectory))
     
     let packagesElement = XMLElement(name: "packages")
     rootElement.addChild(packagesElement)
@@ -108,7 +107,7 @@ func generateCoberturaReport(from coverageReport: CoverageReport, targetsToInclu
     
     for fileCoverageReport in allFiles {
         // Define file path relative to source!
-        let filePath = fileCoverageReport.path.replacingOccurrences(of: currentDirectoryPath + "/", with: "")
+        let filePath = fileCoverageReport.path.replacingOccurrences(of: workingDirectory + "/", with: "")
         let pathComponents = filePath.split(separator: "/")
         let packageName = pathComponents[0..<pathComponents.count - 1].joined(separator: ".")
         
@@ -141,7 +140,7 @@ func generateCoberturaReport(from coverageReport: CoverageReport, targetsToInclu
         
         for functionCoverageReport in fileCoverageReport.functions {
             for index in 0..<functionCoverageReport.executableLines {
-                // Function coverage report won't be 100% reliable without parsing it by file (would need to use xccov view --file filePath currentDirectory + Build/Logs/Test/*.xccovarchive)
+                // Function coverage report won't be 100% reliable without parsing it by file (would need to use xccov view --file filePath workingDirectory + Build/Logs/Test/*.xccovarchive)
                 let lineElement = XMLElement(kind: .element, options: .nodeCompactEmptyElement)
                 lineElement.name = "line"
                 lineElement.addAttribute(XMLNode.attribute(withName: "number", stringValue: "\(functionCoverageReport.lineNumber + index)") as! XMLNode)
@@ -167,6 +166,7 @@ let arguments = Array(ProcessInfo.processInfo.arguments.dropFirst())
 let parser = ArgumentParser(usage: "<options>", overview: "Converts xccov reports to Cobertura XML")
 
 let jsonReportPathArg = parser.add(option: "--input", shortName: "-i", kind: String.self, usage: "Path to the JSON xccov report")
+let workingDirectoryArg = parser.add(option: "--working-directory", shortName: "-d", kind: String.self, usage: "The current working directory")
 let targetsToIncludeArg = parser.add(option: "--targetsToInclude", shortName: "-t", kind: [String].self, usage: "List of targets to include in the coverage report")
 let packagesToExcludeArg = parser.add(option: "--packagesToExclude", shortName: "-p", kind: [String].self, usage: "List of packages to exclude from the coverage report")
 
@@ -174,6 +174,11 @@ let parsedArguments = try parser.parse(arguments)
 
 guard let jsonReportPath = parsedArguments.get(jsonReportPathArg) else {
     print("Missing JSON xccov report path")
+    exit(1)
+}
+
+guard let workingDirectory = parsedArguments.get(workingDirectoryArg) else {
+    print("Missing working directory")
     exit(1)
 }
 
@@ -191,5 +196,5 @@ guard let report = try? JSONDecoder().decode(CoverageReport.self, from: data) el
 
 let targetsToInclude = parsedArguments.get(targetsToIncludeArg) ?? []
 let packagesToExclude = parsedArguments.get(packagesToExcludeArg) ?? []
-let coberturaReport = generateCoberturaReport(from: report, targetsToInclude: targetsToInclude, packagesToExclude: packagesToExclude)
+let coberturaReport = generateCoberturaReport(from: report, targetsToInclude: targetsToInclude, packagesToExclude: packagesToExclude, workingDirectory: workingDirectory)
 print("\(coberturaReport)")
