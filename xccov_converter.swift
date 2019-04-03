@@ -111,7 +111,6 @@ func generateCoberturaReport(from coverageReport: CoverageReport, targetsToInclu
         let pathComponents = filePath.split(separator: "/")
         let packageName = pathComponents[0..<pathComponents.count - 1].joined(separator: ".")
         
-        
         isNewPackage = currentPackage != packageName
         
         if isNewPackage {
@@ -177,10 +176,7 @@ guard let jsonReportPath = parsedArguments.get(jsonReportPathArg) else {
     exit(1)
 }
 
-guard let workingDirectory = parsedArguments.get(workingDirectoryArg) else {
-    print("Missing working directory")
-    exit(1)
-}
+let workingDirectory = parsedArguments.get(workingDirectoryArg) ?? FileManager.default.currentDirectoryPath
 
 // Trying to get the JSON String from the input parameter filePath
 guard let json = try? String(contentsOfFile: jsonReportPath, encoding: .utf8), let data = json.data(using: .utf8) else {
