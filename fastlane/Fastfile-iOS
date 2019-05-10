@@ -17,9 +17,8 @@ default_platform(:ios)
 
 platform :ios do
   desc "Bootstraps dependencies"
-  lane :bootstrap do
-    project_directory = sh "find .. -name Cartfile -not -path \"*Carthage/*\" -exec dirname {} \\; | tr -d '\n'"
-    Dir.chdir(project_directory) do
+  lane :bootstrap do |options|
+    Dir.chdir(options[:project_directory]) do
       if File.readlines("Cartfile.private").grep(/Cuckoo/).size > 0
         sh "carthage checkout Cuckoo"
       end
