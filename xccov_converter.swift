@@ -163,14 +163,15 @@ func generateCoberturaReport(from coverageReport: CoverageReport, targetsToInclu
         /* Consideara le classi coincidenti con i file per cui parso l'intero file */
 
         let covFile = fileCoverageReport.name.replacingOccurrences(of: ".swift", with: ".cov")
-        guard let covData = try? String(contentsOfFile: (covPath + covFile)) else {
-            return "COV!!"
+        let slashPath = covPath.hasSuffix("/") ? covPath : covPath + "/"
+        guard let covData = try? String(contentsOfFile: (slashPath + covFile)) else {
+            return "COV!! \(slashPath + covFile)"
         }
         let covLines = covData.components(separatedBy: .newlines)
         linesElement.addAttribute(XMLNode.attribute(withName: "fileName", stringValue: "\(covFile)") as! XMLNode)
 
         for index in 0..<covLines.count - 1 {
-            guard let line = getLine(id: index, lines: covLines), !line.hasSuffix("*") else {
+            guard let lineHits = getLineHits(id: index, lines: covLines) else {
                 continue
             }
 
@@ -178,10 +179,7 @@ func generateCoberturaReport(from coverageReport: CoverageReport, targetsToInclu
             lineElement.name = "line"
             lineElement.addAttribute(XMLNode.attribute(withName: "number", stringValue: "\(index)") as! XMLNode)
             lineElement.addAttribute(XMLNode.attribute(withName: "branch", stringValue: "false") as! XMLNode)
-
-            let components = line.components(separatedBy: " ")
-            let covHits = Int(components.last ?? "") ?? 0
-            lineElement.addAttribute(XMLNode.attribute(withName: "hits", stringValue: "\(covHits)") as! XMLNode)
+            lineElement.addAttribute(XMLNode.attribute(withName: "hits", stringValue: "\(lineHits)") as! XMLNode)
 
             linesElement.addChild(lineElement)
         }
@@ -190,11 +188,39 @@ func generateCoberturaReport(from coverageReport: CoverageReport, targetsToInclu
     return doc.xmlString(options: [.nodePrettyPrint])
 }
 
-func getLine(id: Int, lines: [String]) -> String? {
+func getLineHits(id: Int, lines: [String]) -> Int? {
 
+    var subrange = false
+    var subHits = 0
     for line in lines {
+
+        if subrange == true {
+            if line.hasSuffix("]") {
+                subrange = false
+                return subHits
+            }
+            var subLine = line.trimmingCharacters(in: .whitespaces)
+            subLine.removeFirst()
+            subLine.removeLast()
+            let components = subLine.components(separatedBy: " ")
+            subHits = Int(components.last ?? "") ?? 0
+            if subHits == 0 {
+                return 0
+            }
+            continue
+        }
+
         if line.trimmingCharacters(in: .whitespaces).starts(with: "\(id): ") {
-            return line
+            if line.hasSuffix("*") { return nil }
+            if line.hasSuffix("[") {
+                subHits = 0
+                subrange = true
+                continue
+            }
+
+            let components = line.components(separatedBy: " ")
+            let covHits = Int(components.last ?? "") ?? 0
+            return covHits
         }
     }
     return nil
