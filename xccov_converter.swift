@@ -192,7 +192,10 @@ func getLineHits(id: Int, lines: [String]) -> Int? {
 
     var subrange = false
     var subHits = 0
-    for line in lines {
+    // velocizzo il processo
+    let subLines = id > 0 ? Array(lines.dropFirst(id - 1)) : lines
+
+    for line in subLines {
 
         if subrange == true {
             if line.hasSuffix("]") {
@@ -203,7 +206,13 @@ func getLineHits(id: Int, lines: [String]) -> Int? {
             subLine.removeFirst()
             subLine.removeLast()
             let components = subLine.components(separatedBy: " ")
-            subHits = Int(components.last ?? "") ?? 0
+            if components.count == 3 {
+                var middle = components[1]
+                middle.removeLast()     // ","
+                if Int(middle) != 0 {
+                    subHits = Int(components.last ?? "") ?? 0
+                }
+            }
             if subHits == 0 {
                 return 0
             }
@@ -213,7 +222,11 @@ func getLineHits(id: Int, lines: [String]) -> Int? {
         if line.trimmingCharacters(in: .whitespaces).starts(with: "\(id): ") {
             if line.hasSuffix("*") { return nil }
             if line.hasSuffix("[") {
-                subHits = 0
+                var startLine = line
+                startLine.removeLast()
+                startLine = startLine.trimmingCharacters(in: .whitespaces)
+                let components = startLine.components(separatedBy: " ")
+                subHits = Int(components.last ?? "") ?? 0
                 subrange = true
                 continue
             }
