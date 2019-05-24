@@ -39,61 +39,58 @@ platform :ios do
     )
   end
 
-  def generate_report
-    UI.message "Generating Test Report ..."
-    sh 'xchtmlreport -r test_output/TestHostApp.test_result'
-    UI.success "Test Report Successfully generated"
-  end
-
   desc "Runs tests"
   lane :test do |options|
-    derived_data_path = options[:project_directory] + "/Build/"
-    clear_derived_data(derived_data_path: derived_data_path)
-    scan(workspace: get_main_workspace,
-      scheme: options[:scheme],
-      clean: true,
-      code_coverage: true,
-      derived_data_path: derived_data_path)
-    conversion_script = "fastlane/converter.swift"
-    xccov_report_file = "fastlane/xccov_report.json"
-    cobertura_report_file = "fastlane/cobertura_report.xml"
-    file_list = "fastlane/filelist"
-    detail_cov_path = "fastlane/linescov/"
-    Dir.chdir("..") do
-        working_directory = `pwd | sed -e \"s/^\\/private//\" | tr -d '\n'`
-        xcresult = `ls -d #{"\"" + derived_data_path + "\"Logs/Test/*.xcresult/"}  | tr -d '\n'`
-        devices = `cd #{"\"" + working_directory + "/" + xcresult + "\""} && ls -d *_Test | wc -l`
-        numDevices = devices.chomp.to_i - 1
-        UI.message "Devices: " + numDevices.to_s
-        if numDevices > 1
-            srcs = ""
-            dest = numDevices + 1
-            for i in 1..numDevices do
-                id = i + dest
-                srcs += id.to_s + "_Test/*.xccovreport " + id.to_s + "_Test/action.xccovarchive "
-                puts id
-                puts srcs
-            end
-            sh "cd #{"\"" + working_directory + "/" + xcresult + "\""} && xcrun xccov merge --outReport #{dest}_Test/merged.xccovreport --outArchive #{dest}_Test/action.xccovarchive #{srcs}"
-            #
-            sh "xcrun xccov view --file-list #{"\"" + derived_data_path + "\"/Logs/Test/*.xcresult/" + dest.to_s + "_Test/action.xccovarchive"} > #{file_list}"
-            sh "if [ -e #{detail_cov_path} ]; then rm -rf #{detail_cov_path}; fi"
-            sh "mkdir #{detail_cov_path}"
-            sh "while read f; do OUTNAME=$(basename \"$f\" .swift); xcrun xccov view --file \"$f\" #{"\"" + derived_data_path + "\"/Logs/Test/*.xcresult/" + dest.to_s + "_Test/action.xccovarchive"} > #{detail_cov_path}$OUTNAME.cov; done < #{file_list}"
-            sh "curl https://raw.githubusercontent.com/aliaslab-1984/fastlane-utils/master/xccov_converter.swift > #{conversion_script}; chmod +x #{conversion_script}"
-            sh "xcrun xccov view #{"\"" + derived_data_path + "\"/Logs/Test/*.xcresult/" + dest.to_s + "_Test/*.xccovreport"} --json > #{xccov_report_file}"
-        else
-            sh "xcrun xccov view --file-list #{"\"" + derived_data_path + "\"/Logs/Test/*.xcresult/*_Test/action.xccovarchive"} > #{file_list}"
-            sh "if [ -e #{detail_cov_path} ]; then rm -rf #{detail_cov_path}; fi"
-            sh "mkdir #{detail_cov_path}"
-            sh "while read f; do OUTNAME=$(basename \"$f\" .swift); xcrun xccov view --file \"$f\" #{"\"" + derived_data_path + "\"/Logs/Test/*.xcresult/*_Test/action.xccovarchive"} > #{detail_cov_path}$OUTNAME.cov; done < #{file_list}"
-            sh "curl https://raw.githubusercontent.com/aliaslab-1984/fastlane-utils/master/xccov_converter.swift > #{conversion_script}; chmod +x #{conversion_script}"
-            sh "xcrun xccov view #{"\"" + derived_data_path + "\"/Logs/Test/*.xcresult/*_Test/*.xccovreport"} --json > #{xccov_report_file}"
-        end
-        sh "./#{conversion_script} -i #{xccov_report_file} -d \"#{working_directory}\" -t #{options[:coverage_target]} -c #{detail_cov_path} > #{cobertura_report_file}"
-    end
-    #generate_report
-  end
+  derived_data_path = options[:project_directory] + "/Build/"
+ clear_derived_data(derived_data_path: derived_data_path)
+ scan(workspace: get_main_workspace,
+   scheme: options[:scheme],
+   clean: true,
+   code_coverage: true,
+   derived_data_path: derived_data_path)
+ conversion_script = "fastlane/converter.swift"
+ xccov_report_file = "fastlane/xccov_report.json"
+ cobertura_report_file = "fastlane/cobertura_report.xml"
+ file_list = "fastlane/filelist"
+ detail_cov_path = "fastlane/linescov/"
+ Dir.chdir("..") do
+     working_directory = `pwd | sed -e \"s/^\\/private//\" | tr -d '\n'`
+     xcresult = `ls -d #{"\"" + derived_data_path + "\"Logs/Test/*.xcresult/"}  | tr -d '\n'`
+     devices = `cd #{"\"" + working_directory + "/" + xcresult + "\""} && ls -d *_Test | wc -l`
+     numDevices = devices.chomp.to_i - 1
+     UI.message "Devices: " + numDevices.to_s
+     if numDevices > 1
+         srcs = ""
+         dest = numDevices + 1
+         for i in 1..numDevices do
+             id = i + dest
+             srcs += id.to_s + "_Test/*.xccovreport " + id.to_s + "_Test/action.xccovarchive "
+             puts id
+             puts srcs
+         end
+         sh "cd #{"\"" + working_directory + "/" + xcresult + "\""} && xcrun xccov merge --outReport #{dest}_Test/merged.xccovreport --outArchive #{dest}_Test/action.xccovarchive #{srcs}"
+
+         sh "xcrun xccov view --file-list #{"\"" + derived_data_path + "\"/Logs/Test/*.xcresult/" + dest.to_s + "_Test/action.xccovarchive"} > #{file_list}"
+         sh "if [ -e #{detail_cov_path} ]; then rm -rf #{detail_cov_path}; fi"
+         sh "mkdir #{detail_cov_path}"
+         sh "while read f; do OUTNAME=$(basename \"$f\" .swift); xcrun xccov view --file \"$f\" #{"\"" + derived_data_path + "\"/Logs/Test/*.xcresult/" + dest.to_s + "_Test/action.xccovarchive"} > #{detail_cov_path}$OUTNAME.cov; done < #{file_list}"
+         sh "curl https://raw.githubusercontent.com/aliaslab-1984/fastlane-utils/master/xccov_converter.swift > #{conversion_script}; chmod +x #{conversion_script}"
+         sh "xcrun xccov view #{"\"" + derived_data_path + "\"/Logs/Test/*.xcresult/" + dest.to_s + "_Test/*.xccovreport"} --json > #{xccov_report_file}"
+     else
+         sh "xcrun xccov view --file-list #{"\"" + derived_data_path + "\"/Logs/Test/*.xcresult/*_Test/action.xccovarchive"} > #{file_list}"
+         sh "if [ -e #{detail_cov_path} ]; then rm -rf #{detail_cov_path}; fi"
+         sh "mkdir #{detail_cov_path}"
+         sh "while read f; do OUTNAME=$(basename \"$f\" .swift); xcrun xccov view --file \"$f\" #{"\"" + derived_data_path + "\"/Logs/Test/*.xcresult/*_Test/action.xccovarchive"} > #{detail_cov_path}$OUTNAME.cov; done < #{file_list}"
+         sh "curl https://raw.githubusercontent.com/aliaslab-1984/fastlane-utils/master/xccov_converter.swift > #{conversion_script}; chmod +x #{conversion_script}"
+         sh "xcrun xccov view #{"\"" + derived_data_path + "\"/Logs/Test/*.xcresult/*_Test/*.xccovreport"} --json > #{xccov_report_file}"
+     end
+     sh "./#{conversion_script} -i #{xccov_report_file} -d \"#{working_directory}\" -t #{options[:coverage_target]} -c #{detail_cov_path} > #{cobertura_report_file}"
+
+     UI.message "Generating Test Report ..."
+     sh "xchtmlreport -r #{"\"" + derived_data_path + "\""}"
+     UI.success "Test Report Successfully generated"
+ end
+end
 
   desc "Builds and archives the specified scheme"
   lane :archive do |options|
