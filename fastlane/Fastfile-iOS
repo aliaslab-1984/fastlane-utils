@@ -90,8 +90,6 @@ platform :ios do
        UI.message "Generating Test Report ..."
        sh "xchtmlreport -r #{"\"" + derived_data_path + "\""}"
        UI.success "Test Report Successfully generated"
-
-       trainer(output_directory: "#{"\"" + derived_data_path + "\""}")
    end
 end
 
