@@ -47,7 +47,8 @@ platform :ios do
      scheme: options[:scheme],
      clean: true,
      code_coverage: true,
-     derived_data_path: derived_data_path)
+     derived_data_path: derived_data_path,
+     fail_build: false)
    conversion_script = "fastlane/converter.swift"
    xccov_report_file = "fastlane/xccov_report.json"
    cobertura_report_file = "fastlane/cobertura_report.xml"
