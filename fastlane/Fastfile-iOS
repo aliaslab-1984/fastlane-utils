@@ -43,15 +43,11 @@ platform :ios do
   lane :test do |options|
    derived_data_path = options[:project_directory] + "/Build/"
    clear_derived_data(derived_data_path: derived_data_path)
-   begin
-     scan(workspace: get_main_workspace,
-       scheme: options[:scheme],
-       clean: true,
-       code_coverage: true,
-       derived_data_path: derived_data_path)
-   rescue => ex
-      puts ex
-   end
+   scan(workspace: get_main_workspace,
+     scheme: options[:scheme],
+     clean: true,
+     code_coverage: true,
+     derived_data_path: derived_data_path)
    conversion_script = "fastlane/converter.swift"
    xccov_report_file = "fastlane/xccov_report.json"
    cobertura_report_file = "fastlane/cobertura_report.xml"
@@ -93,6 +89,8 @@ platform :ios do
        UI.message "Generating Test Report ..."
        sh "xchtmlreport -r #{"\"" + derived_data_path + "\""}"
        UI.success "Test Report Successfully generated"
+
+       trainer(output_directory: "#{"\"" + derived_data_path + "\""}")
    end
 end
 
