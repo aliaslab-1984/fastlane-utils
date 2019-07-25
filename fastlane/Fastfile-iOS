@@ -19,6 +19,10 @@ platform :ios do
   desc "Bootstraps dependencies"
   lane :bootstrap do |options|
     Dir.chdir(options[:project_directory]) do
+      if !File.file?("Cartfile.resolved")
+        UI.user_error!("Cartfile.resolved not found: please run \"carthage update --platform iOS --no-build\" and retry.")
+        next
+      end
       private_cartfile = "Cartfile.private"
       if File.file?(private_cartfile) && File.readlines(private_cartfile).grep(/Cuckoo/).size > 0
         sh "rm -rf \"Carthage/Checkouts/Cuckoo\""
