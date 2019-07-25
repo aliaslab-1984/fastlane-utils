@@ -19,7 +19,9 @@ platform :ios do
   desc "Bootstraps dependencies"
   lane :bootstrap do |options|
     Dir.chdir(options[:project_directory]) do
-      if File.readlines("Cartfile.private").grep(/Cuckoo/).size > 0
+      private_cartfile = "Cartfile.private"
+      if File.file?(private_cartfile) && File.readlines(private_cartfile).grep(/Cuckoo/).size > 0
+        sh "rm -rf \"Carthage/Checkouts/Cuckoo\""
         sh "carthage checkout Cuckoo"
       end
       sh "rome download --platform iOS"
