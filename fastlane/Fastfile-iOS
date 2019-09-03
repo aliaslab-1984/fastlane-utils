@@ -85,14 +85,14 @@ platform :ios do
            sh "xcrun xccov view --file-list #{"\"" + derived_data_path + "\"/Logs/Test/*.xcresult/" + dest.to_s + "_Test/action.xccovarchive"} > #{file_list}"
            sh "if [ -e #{detail_cov_path} ]; then rm -rf #{detail_cov_path}; fi"
            sh "mkdir #{detail_cov_path}"
-           sh "while read f; do OUTNAME=$(basename \"$f\" .swift); xcrun xccov view --file \"$f\" #{"\"" + derived_data_path + "\"/Logs/Test/*.xcresult/" + dest.to_s + "_Test/action.xccovarchive"} > #{detail_cov_path}$OUTNAME.cov; done < #{file_list}"
+           sh "while read f; do OUTNAME=$(basename \"$f\"); xcrun xccov view --file \"$f\" #{"\"" + derived_data_path + "\"/Logs/Test/*.xcresult/" + dest.to_s + "_Test/action.xccovarchive"} > #{detail_cov_path}$OUTNAME.cov; done < #{file_list}"
            sh "curl https://raw.githubusercontent.com/aliaslab-1984/fastlane-utils/master/xccov_converter.swift > #{conversion_script}; chmod +x #{conversion_script}"
            sh "xcrun xccov view #{"\"" + derived_data_path + "\"/Logs/Test/*.xcresult/" + dest.to_s + "_Test/*.xccovreport"} --json > #{xccov_report_file}"
        else
            sh "xcrun xccov view --file-list #{"\"" + derived_data_path + "\"/Logs/Test/*.xcresult/*_Test/action.xccovarchive"} > #{file_list}"
            sh "if [ -e #{detail_cov_path} ]; then rm -rf #{detail_cov_path}; fi"
            sh "mkdir #{detail_cov_path}"
-           sh "while read f; do OUTNAME=$(basename \"$f\" .swift); xcrun xccov view --file \"$f\" #{"\"" + derived_data_path + "\"/Logs/Test/*.xcresult/*_Test/action.xccovarchive"} > #{detail_cov_path}$OUTNAME.cov; done < #{file_list}"
+           sh "while read f; do OUTNAME=$(basename \"$f\"); xcrun xccov view --file \"$f\" #{"\"" + derived_data_path + "\"/Logs/Test/*.xcresult/*_Test/action.xccovarchive"} > #{detail_cov_path}$OUTNAME.cov; done < #{file_list}"
            sh "curl https://raw.githubusercontent.com/aliaslab-1984/fastlane-utils/master/xccov_converter.swift > #{conversion_script}; chmod +x #{conversion_script}"
            sh "xcrun xccov view #{"\"" + derived_data_path + "\"/Logs/Test/*.xcresult/*_Test/*.xccovreport"} --json > #{xccov_report_file}"
        end
