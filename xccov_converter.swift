@@ -6,7 +6,7 @@
  */
 
 import Foundation
-import Utility // https://github.com/apple/swift-package-manager.git ~> 0.3.0
+import SPMUtility // https://github.com/apple/swift-package-manager.git ~> 0.4.0
 
 extension String {
     func contains(elementOfArray: [String]) -> Bool {
@@ -136,28 +136,6 @@ func generateCoberturaReport(from coverageReport: CoverageReport, targetsToInclu
 
         let linesElement = XMLElement(name: "lines")
         classElement.addChild(linesElement)
-
-    /* Old Style
-        for functionCoverageReport in fileCoverageReport.functions {
-            for index in 0..<functionCoverageReport.executableLines {
-
-                // Function coverage report won't be 100% reliable without parsing it by file (would need to use xccov view --file filePath workingDirectory + Build/Logs/Test/ *.xccovarchive)
-                let lineElement = XMLElement(kind: .element, options: .nodeCompactEmptyElement)
-                lineElement.name = "line"
-                lineElement.addAttribute(XMLNode.attribute(withName: "number", stringValue: "\(functionCoverageReport.lineNumber + index)") as! XMLNode)
-                lineElement.addAttribute(XMLNode.attribute(withName: "branch", stringValue: "false") as! XMLNode)
-
-                let lineHits: Int
-                if index < functionCoverageReport.coveredLines {
-                    lineHits = functionCoverageReport.executionCount
-                } else {
-                    lineHits = 0
-                }
-
-                lineElement.addAttribute(XMLNode.attribute(withName: "hits", stringValue: "\(lineHits)") as! XMLNode)
-                linesElement.addChild(lineElement)
-            }
-        } */
 
         /* Ci sono degli errori nei dati di input: executableLines è sbagliato; da il numero di linee coperte, ma non dice quali, ecc.*/
         /* Consideara le classi coincidenti con i file per cui parso l'intero file */
