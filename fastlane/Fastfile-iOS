@@ -65,6 +65,7 @@ platform :ios do
    if failedScan
       raise 'Scan failed'
    end
+   slackSend color: 'good', message: 'Message from Jenkins'
 end
 
   desc "Builds and archives the specified scheme"
