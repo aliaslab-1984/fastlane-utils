@@ -50,16 +50,16 @@ platform :ios do
    derived_data_path = options[:project_directory] + "/Build/"
    clear_derived_data(derived_data_path: derived_data_path)
    failedScan = false
-   begin
+   #begin
      scan(workspace: get_main_workspace,
        scheme: options[:scheme],
        clean: true,
        code_coverage: true,
        derived_data_path: derived_data_path)
-   rescue => ex
-      failedScan = true
-      puts ex
-   end
+   #rescue => ex
+  #    failedScan = true
+  #    puts ex
+   #end
    options[:derived_data_path] = derived_data_path
    extract_coverage(options)
    if failedScan
