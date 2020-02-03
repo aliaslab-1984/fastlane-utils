@@ -61,7 +61,7 @@ platform :ios do
   #    puts ex
    #end
    options[:derived_data_path] = derived_data_path
-   extract_coverage(options)
+   #extract_coverage(options)
    if failedScan
       raise 'Scan failed'
    end
