@@ -50,18 +50,26 @@ platform :ios do
    derived_data_path = options[:project_directory] + "/Build/"
    clear_derived_data(derived_data_path: derived_data_path)
    failedScan = false
-   #begin
+
+   begin
      scan(workspace: get_main_workspace,
        scheme: options[:scheme],
        clean: true,
        code_coverage: true,
        derived_data_path: derived_data_path)
-   #rescue => ex
-  #    failedScan = true
-  #    puts ex
-   #end
+   rescue => ex
+      failedScan = true
+      puts ex
+   end
+
    options[:derived_data_path] = derived_data_path
+   # TODO: esiste un plugin per fastlane (da provare con Xcode 11): https://github.com/TitouanVanBelle/fastlane-plugin-xchtmlreport
+   Dir.chdir("..") do
+   	sh "xchtmlreport -r #{"\"" + derived_data_path + "\"/Logs/Test/*.xcresult/"}"
+   end
+
    extract_coverage(options)
+
    if failedScan
       raise 'Scan failed'
    end
