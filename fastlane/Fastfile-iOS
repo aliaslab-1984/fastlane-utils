@@ -93,7 +93,7 @@ end
     scheme = sh("cat \"#{config_path}\" | grep scheme | cut -d= -f2 | tr -d '\n'")
     archive_path = archive(scheme:scheme)
     
-    if !Dir.exist?("archive_path")
+    if !Dir.exist?("#{archive_path}")
       new_path_file = options[:project_directory] + "/test.txt"
       new_framework_path = sh("head -n 1 + \"#{new_path_file}\"")
       UI.message("Should use: #{new_framework_path}")
