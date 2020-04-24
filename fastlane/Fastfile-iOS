@@ -95,7 +95,7 @@ end
     
     if !Dir.exist?("archive_path")
       new_path_file = options[:project_directory] + "/test.txt"
-      new_framework_path = sh("head -n 1 + \"#{new_path_file}\")
+      new_framework_path = sh("head -n 1 + \"#{new_path_file}\"")
       UI.message("Should use: #{new_framework_path}")
     end
     
