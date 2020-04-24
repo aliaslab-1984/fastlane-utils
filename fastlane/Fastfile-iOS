@@ -77,7 +77,7 @@ end
 
   desc "Builds and archives the specified scheme"
   lane :archive do |options|
-    gym(workspace: get_main_workspace, scheme: options[:scheme], skip_package_ipa: true, skip_archive)
+    gym(workspace: get_main_workspace, scheme: options[:scheme], skip_package_ipa: true, skip_archive: true)
   end
 
   desc "Publishes the SDK framework to Artifactory"
