@@ -96,7 +96,8 @@ end
     if !Dir.exist?("#{archive_path}")
       new_path_file = options[:project_directory] + "/test.txt"
       new_framework_path = sh("head -n 1 + \"#{new_path_file}\"")
-      UI.message("Should use: #{new_framework_path}")
+      UI.important "Should use: #{new_framework_path}"
+      archive_path = new_framework_path
     end
     
     deploy_framework(config_path:config_path, framework_path:archive_path + "/Products/Library/Frameworks")
