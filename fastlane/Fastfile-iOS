@@ -94,11 +94,13 @@ end
     archive_path = archive(scheme:scheme)
     
     if !Dir.exist?("#{archive_path}")
-      new_path_file = "../" + sdk_project_directory + "/test.txt"
-      new_framework_path = sh("head -n 1 \"#{new_path_file}\"")
+      new_path_file = "../" + options[:sdk_project_directory] + "/test.txt"
+      new_framework_path = sh("head -n 1 \"#{new_path_file}\"").chomp
       UI.important "Should use: #{new_framework_path}"
-      #sh("for i in `ls \"#{new_framework_path}\"`; do mv \"#{new_framework_path}\"$i `echo \"#{new_framework_path}\"$i | sed 's/-Universal//'` ; done")
-      #sh("P=\"#{new_framework_path}\"; for i in $(ls \"${P}\"); do mv \"#{new_framework_path}\"$i `echo \"#{new_framework_path}\"$i | sed 's/-Universal//'` ; done")
+      Dir.glob(new_framework_path + "*.framework").each do |f|
+        g = f.sub("-Universal", "")
+        sh("mv \"#{f}\" \"#{g}\"")
+      end
       archive_path = new_framework_path
       deploy_framework(config_path:config_path, framework_path:new_framework_path)
     else
