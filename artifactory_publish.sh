@@ -67,6 +67,10 @@ zip_framework() {
 
 check_artifactory_response() {
   echo "Response is: $1"
+  if [ -z "$1" ]; then
+    echo "No response from Artifactory"
+    exit 1
+  fi
   ERROR_COUNT=$(echo $1 | jq '.errors? | length')
   if [ "$ERROR_COUNT" -gt "0" ]; then
     echo "Upload failed"
