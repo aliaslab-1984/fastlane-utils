@@ -6,7 +6,10 @@
  */
 
 import Foundation
-import SPMUtility // https://github.com/apple/swift-package-manager.git ~> 0.4.0
+// import TSCUtility // https://github.com/apple/swift-package-manager.git ~> 0.5.0
+//import TSCUtility // apple/swift-tools-support-core
+
+import ArgumentParser // apple/swift-argument-parser
 
 extension String {
     func contains(elementOfArray: [String]) -> Bool {
@@ -137,10 +140,32 @@ func generateCoberturaReport(from coverageReport: CoverageReport, targetsToInclu
         let linesElement = XMLElement(name: "lines")
         classElement.addChild(linesElement)
 
+    /* Old Style
+        for functionCoverageReport in fileCoverageReport.functions {
+            for index in 0..<functionCoverageReport.executableLines {
+
+                // Function coverage report won't be 100% reliable without parsing it by file (would need to use xccov view --file filePath workingDirectory + Build/Logs/Test/ *.xccovarchive)
+                let lineElement = XMLElement(kind: .element, options: .nodeCompactEmptyElement)
+                lineElement.name = "line"
+                lineElement.addAttribute(XMLNode.attribute(withName: "number", stringValue: "\(functionCoverageReport.lineNumber + index)") as! XMLNode)
+                lineElement.addAttribute(XMLNode.attribute(withName: "branch", stringValue: "false") as! XMLNode)
+
+                let lineHits: Int
+                if index < functionCoverageReport.coveredLines {
+                    lineHits = functionCoverageReport.executionCount
+                } else {
+                    lineHits = 0
+                }
+
+                lineElement.addAttribute(XMLNode.attribute(withName: "hits", stringValue: "\(lineHits)") as! XMLNode)
+                linesElement.addChild(lineElement)
+            }
+        } */
+
         /* Ci sono degli errori nei dati di input: executableLines è sbagliato; da il numero di linee coperte, ma non dice quali, ecc.*/
         /* Consideara le classi coincidenti con i file per cui parso l'intero file */
 
-        let covFile = "\(fileCoverageReport.name).cov"
+        let covFile = fileCoverageReport.name.replacingOccurrences(of: ".swift", with: ".cov")
         let slashPath = covPath.hasSuffix("/") ? covPath : covPath + "/"
         guard let covData = try? String(contentsOfFile: (slashPath + covFile)) else {
             return "COV!! \(slashPath + covFile)"
@@ -219,7 +244,7 @@ func getLineHits(id: Int, lines: [String]) -> Int? {
     return nil
 }
 
-let arguments = Array(ProcessInfo.processInfo.arguments.dropFirst())
+/*let arguments = Array(ProcessInfo.processInfo.arguments.dropFirst())
 let parser = ArgumentParser(usage: "<options>", overview: "Converts xccov reports to Cobertura XML")
 
 let jsonReportPathArg = parser.add(option: "--input", shortName: "-i", kind: String.self, usage: "Path to the JSON xccov report")
@@ -229,33 +254,53 @@ let packagesToExcludeArg = parser.add(option: "--packagesToExclude", shortName: 
 
 let covPathArg = parser.add(option: "--linesCoverage", shortName: "-c", kind: String.self, usage: "Path of detailed coverage files")     // "linescov/"
 
-let parsedArguments = try parser.parse(arguments)
+let parsedArguments = try parser.parse(arguments) */
 
-guard let jsonReportPath = parsedArguments.get(jsonReportPathArg) else {
-    print("Missing JSON xccov report path")
-    exit(1)
+struct Coverter: ParsableCommand {
+    
+    @Option(name: [.customShort("i"), .customLong("input")], help: "Path to the JSON xccov report")
+    var jsonReportPath: String
+
+    @Option(name: [.customShort("d"), .long], help: "The current working directory.")
+    var workingDirectoryArg: String
+
+    //@Flag(name: .shortAndLong, help: "Print status updates while counting.")
+    //var verbose: Bool
+
+    @Option(name: [.short, .customLong("targetsToInclude")], help: "List of targets to include in the coverage report.")
+    var targetsToIncludeArg: [String]
+
+    @Option(name: [.short, .customLong("packagesToExclude")], help: "List of packages to exclude from the coverage report")
+    var packagesToExcludeArg: [String]
+
+    @Option(name: [.customShort("c"), .customLong("linesCoverage")], help: "Path of detailed coverage files.")
+    var covPath: String
+
+    func run() throws {
+    	let workingDirectory = workingDirectoryArg ?? FileManager.default.currentDirectoryPath
+
+	// Trying to get the JSON String from the input parameter filePath
+	    guard let json = try? String(contentsOfFile: jsonReportPath, encoding: .utf8), let data = json.data(using: .utf8) else {
+   	    print("Cannot read content of \(jsonReportPath)")
+            return
+	}
+
+        // Trying to decode the JSON into CoverageReport structure
+        guard let report = try? JSONDecoder().decode(CoverageReport.self, from: data) else {
+            print("Invalid input format")
+            return
+        }
+
+        let targetsToInclude = targetsToIncludeArg ?? []
+        let packagesToExclude = packagesToExcludeArg ?? []
+        let coberturaReport = generateCoberturaReport(from: report,
+	        				      targetsToInclude: targetsToInclude,
+	        				      packagesToExclude: packagesToExclude,
+			        		      workingDirectory: workingDirectory,
+		        			      covPath: covPath)
+        print("\(coberturaReport)")
+    }
 }
 
-guard let covPath = parsedArguments.get(covPathArg) else {
-    print("Missing detailed coverage files path")
-    exit(1)
-}
+Coverter.main()
 
-let workingDirectory = parsedArguments.get(workingDirectoryArg) ?? FileManager.default.currentDirectoryPath
-
-// Trying to get the JSON String from the input parameter filePath
-guard let json = try? String(contentsOfFile: jsonReportPath, encoding: .utf8), let data = json.data(using: .utf8) else {
-    print("Cannot read content of \(jsonReportPath)")
-    exit(1)
-}
-
-// Trying to decode the JSON into CoverageReport structure
-guard let report = try? JSONDecoder().decode(CoverageReport.self, from: data) else {
-    print("Invalid input format")
-    exit(1)
-}
-
-let targetsToInclude = parsedArguments.get(targetsToIncludeArg) ?? []
-let packagesToExclude = parsedArguments.get(packagesToExcludeArg) ?? []
-let coberturaReport = generateCoberturaReport(from: report, targetsToInclude: targetsToInclude, packagesToExclude: packagesToExclude, workingDirectory: workingDirectory, covPath: covPath)
-print("\(coberturaReport)")
