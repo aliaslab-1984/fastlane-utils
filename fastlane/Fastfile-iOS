@@ -17,7 +17,7 @@ default_platform(:ios)
 
 platform :ios do
   desc "Bootstraps dependencies"
-  lane :bootstrap do |options|
+  private_lane :bootstrap do |options|
     Dir.chdir(options[:project_directory]) do
       if !File.file?("Cartfile.resolved")
         UI.user_error!("Cartfile.resolved not found: please run \"carthage update --platform iOS --no-build\" and retry.")
@@ -35,7 +35,7 @@ platform :ios do
   end
 
   desc "Runs SwiftLint"
-  lane :lint do |options|
+  private_lane :lint do |options|
     swiftlint(
       mode: :lint,
       path: options[:project_directory],
@@ -46,7 +46,7 @@ platform :ios do
   end
 
   desc "Runs tests"
-  lane :test do |options|
+  private_lane :test do |options|
    derived_data_path = options[:project_directory] + "/Build/"
    clear_derived_data(derived_data_path: derived_data_path)
    failedScan = false
@@ -73,10 +73,29 @@ platform :ios do
    if failedScan
       raise 'Scan failed'
    end
-end
+  end
+
+  desc "Runs SDK tests for projects without a workspace"
+  private_lane :test_prj do |options|
+    derived_data_path = options[:project_directory] + "/Build/"
+    clear_derived_data(derived_data_path: derived_data_path)
+    scan(project: options[:project],
+       scheme: options[:scheme],
+       clean: true,
+       code_coverage: true,
+       derived_data_path: derived_data_path)
+
+    # TODO: esiste un plugin per fastlane (da provare con Xcode 11): https://github.com/TitouanVanBelle/fastlane-plugin-xchtmlreport
+    Dir.chdir("..") do
+   	  sh "xchtmlreport -r #{"\"" + derived_data_path + "\"/Logs/Test/*.xcresult/"}"
+    end
+
+    options[:derived_data_path] = derived_data_path
+    extract_coverage(options)
+  end
 
   desc "Builds and archives the specified scheme"
-  lane :archive do |options|
+  private_lane :archive do |options|
     gym(workspace: get_main_workspace, scheme: options[:scheme], skip_package_ipa: true, skip_archive: true, configuration: "Release")
   end
 
