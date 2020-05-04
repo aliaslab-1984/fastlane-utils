@@ -71,7 +71,8 @@ platform :ios do
    extract_coverage(options)
 
    if failedScan
-      raise 'Scan failed'
+       UI.error "Scan failed"
+       raise 'Scan failed'
    end
   end
 
