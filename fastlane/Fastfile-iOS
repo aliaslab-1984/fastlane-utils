@@ -137,6 +137,9 @@ platform :ios do
     Dir.chdir("..") do
         working_directory = `pwd | sed -e \"s/^\\/private//\" | tr -d '\n'`
 
+        sh "if [ -f #{cobertura_report_file} ]; then rm #{cobertura_report_file}; fi"
+        sh "if [ -f #{xccov_report_file} ]; then rm #{xccov_report_file}; fi"
+
         sh "xcrun xccov view --archive --file-list #{"\"" + derived_data_path + "\"/Logs/Test/*.xcresult/"} > #{file_list}"
         sh "if [ -e #{detail_cov_path} ]; then rm -rf #{detail_cov_path}; fi"
         sh "mkdir #{detail_cov_path}"
