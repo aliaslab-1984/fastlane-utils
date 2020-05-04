@@ -165,8 +165,7 @@ func generateCoberturaReport(from coverageReport: CoverageReport, targetsToInclu
         /* Ci sono degli errori nei dati di input: executableLines è sbagliato; da il numero di linee coperte, ma non dice quali, ecc.*/
         /* Consideara le classi coincidenti con i file per cui parso l'intero file */
 
-        /* Se file *.m aggiunge .cov, se .swift sostituisce con .cov */
-        let covFile = fileCoverageReport.name.replacingOccurrences(of: ".swift", with: "") + ".cov"
+        let covFile = fileCoverageReport.name + ".cov"
         let slashPath = covPath.hasSuffix("/") ? covPath : covPath + "/"
         guard let covData = try? String(contentsOfFile: (slashPath + covFile)) else {
             return "COV!! \(slashPath + covFile)"
