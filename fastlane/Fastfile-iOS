@@ -97,7 +97,11 @@ platform :ios do
 
   desc "Builds and archives the specified scheme"
   private_lane :archive do |options|
-    gym(workspace: get_main_workspace, scheme: options[:scheme], skip_package_ipa: true, skip_archive: true, configuration: "Release")
+    gym(workspace: get_main_workspace,
+        scheme: options[:scheme],
+        skip_package_ipa: true,
+        skip_archive: options[:skip_archive],
+        configuration: "Release")
   end
 
   desc "Publishes the SDK framework to Artifactory"
@@ -111,12 +115,12 @@ platform :ios do
   lane :build_deploy_framework do |options|
     config_path = "../#{get_artifactory_config(config_name: options[:config_name])}"
     scheme = sh("cat \"#{config_path}\" | grep scheme | cut -d= -f2 | tr -d '\n'")
-    archive_path = archive(scheme:scheme)
+    archive_path = archive(scheme: scheme, skip_archive: options[:skip_archive])
 
     if !Dir.exist?("#{archive_path}")
       new_path_file = "../" + options[:sdk_project_directory] + "/deployment_path.txt"
       new_framework_path = sh("head -n 1 \"#{new_path_file}\"").chomp
-      #UI.important "Should use: #{new_framework_path}"
+      UI.message "Should use: #{new_framework_path}"
       Dir.glob(new_framework_path + "*.framework").each do |f|
         g = f.sub("-Universal", "")
         sh("mv \"#{f}\" \"#{g}\"")
