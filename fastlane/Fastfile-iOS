@@ -111,6 +111,20 @@ platform :ios do
     sh "curl https://raw.githubusercontent.com/aliaslab-1984/fastlane-utils/master/artifactory_publish.sh | bash -s -- -c \"#{config_path}\" -f \"#{framework_path}\""
   end
 
+  desc "Build a static library"
+  private_lane :build_static_library do |options|
+    Dir.chdir("../" + options[:prj_dir]) do
+        sh "curl https://raw.githubusercontent.com/aliaslab-1984/fastlane-utils/master/make_static.sh | bash -s"
+    end
+  end
+
+  desc "Deploy a static library"
+  private_lane :deploy_static_library do |options|
+    Dir.chdir("../" + options[:prj_dir]) do
+        sh "curl https://raw.githubusercontent.com/aliaslab-1984/fastlane-utils/master/artifactory_publish_slib.sh | bash -s"
+    end
+  end
+
   desc "Rebuilds the framework and publishes it to Artifactory"
   lane :build_deploy_framework do |options|
     config_path = "../#{get_artifactory_config(config_name: options[:config_name])}"
