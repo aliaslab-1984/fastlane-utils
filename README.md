@@ -10,3 +10,5 @@ The lanes defined in this repository depend on the following utilities:
 * [Rome](https://github.com/blender/Rome)
 * [swift-sh](https://github.com/mxcl/swift-sh)
 * [SwiftLint](https://github.com/realm/SwiftLint)
+* [XCTestHTMLReport](https://github.com/TitouanVanBelle/XCTestHTMLReport)
+* [jq](https://github.com/stedolan/jq)
