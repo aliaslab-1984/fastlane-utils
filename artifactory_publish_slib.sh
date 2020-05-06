@@ -62,6 +62,7 @@ ARTIFACT_URL="https://artifactory.aliaslab.net/artifactory/SecureCallOTP_libCiph
 JSON_URL=$ARTIFACT_URL/libALCipher.json
 VARIANT="Release-universal"
 PRODUCT="libALChiper.a.zip"
+CONFIGURATION="Release"
 
 echo "Downloading JSON from Artifactory"
 ORIGINAL_INDEX_JSON=$(get_current_index_json "$ARTIFACTORY_USER" "$ARTIFACTORY_PASSWORD" "$JSON_URL") || exit $?
@@ -74,17 +75,9 @@ echo $VER
 UPDATED_JSON=$(echo $ORIGINAL_INDEX_JSON | jq --arg "artifactURL" "$ARTIFACT_URL/$VER/$PRODUCT" '. + {"'$VER'": $artifactURL}') || exit $?
 echo "Updated JSON is $UPDATED_JSON"
 
-BUILD_DIR=$(xcodebuild -project ALChiper.xcodeproj -target "ALCipher-Universal" -showBuildSettings | grep -w BUILD_DIR | cut -d= -f2)
-
-# lo trovo nelle var di Xcode?
-ARCHIVE_PATH="Intermediates.noindex/ArchiveIntermediates/ALCipher-Universal/BuildProductsPath"
-
-#TEMP_DIR="$PWD"
-cd ${BUILD_DIR}
-cd ..
-cd "${ARCHIVE_PATH}/${VARIANT}"
+cd build/${CONFIGURATION}-universal/ || exit $?
 if [ -f $PRODUCT ]; then
-	rm $PRODUCT
+        rm $PRODUCT
 fi
 zip -r $PRODUCT *
 
@@ -98,5 +91,3 @@ echo "Uploading JSON to Artifactory"
 JSON_MD5_CHECKSUM=$(echo $UPDATED_JSON | md5 -q)
 JSON_SHA1_CHECKSUM=$(echo $UPDATED_JSON | shasum -a 1 | awk '{ print $1 }')
 echo $UPDATED_JSON | curl -u$ARTIFACTORY_USER:$ARTIFACTORY_PASSWORD -T - --header "X-Checksum-MD5:${JSON_MD5_CHECKSUM}" --header "X-Checksum-Sha1:${JSON_SHA1_CHECKSUM}" "$JSON_URL"
-
-#cd "$TEMP_DIR"

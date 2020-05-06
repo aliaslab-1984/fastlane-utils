@@ -25,8 +25,12 @@ lipo -create -output "${UNIVERSAL_OUTPUTFOLDER}/lib${PROJECT_NAME}.a" "${BUILD_D
 # Last touch. copy the header files. Just for convenience
 cp -R "${BUILD_DIR}/${CONFIGURATION}-iphoneos/include" "${UNIVERSAL_OUTPUTFOLDER}/"
 
+# Make a copy for the deploying script
+mkdir build
+cp -R "${UNIVERSAL_OUTPUTFOLDER}" build/
+
 echo "------------------------------------------------"
-STATIC_LIB="${UNIVERSAL_OUTPUTFOLDER}/lib${PROJECT_NAME}.a"
+STATIC_LIB="build/${CONFIGURATION}-universal/lib${PROJECT_NAME}.a"
 #lipo -info "${STATIC_LIB}"
 #otool -l "${STATIC_LIB}" | grep __LLVM > /dev/null
 
