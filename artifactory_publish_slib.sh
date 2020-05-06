@@ -21,6 +21,19 @@ require_gradle_property() {
 	echo $(require_property ~/.gradle/gradle.properties $1)
 }
 
+check_artifactory_response() {
+  echo "Response is: $1"
+  if [ -z "$1" ]; then
+    echo "No response from Artifactory"
+    exit 1
+  fi
+  ERROR_COUNT=$(echo $1 | jq '.errors? | length')
+  if [ "$ERROR_COUNT" -gt "0" ]; then
+    echo "Upload failed"
+    exit 1
+  fi
+}
+
 get_current_index_json() {
   SEPARATOR="RET_CODE"
   CURL_OUTPUT=$(curl -u$1:$2 -s -w "\n$SEPARATOR%{http_code}\n" "$3") || exit $?
@@ -70,24 +83,29 @@ ORIGINAL_INDEX_JSON=$(get_current_index_json "$ARTIFACTORY_USER" "$ARTIFACTORY_P
 ORIGINAL_VER=$(echo $ORIGINAL_INDEX_JSON | jq 'keys[-1]')
 #echo $ORIGINAL_VER
 VER=$(increment_ver $ORIGINAL_VER)
-echo $VER
+echo "------------------------------------------------"
+echo "----         Uploading build $VER         ----"
+echo "------------------------------------------------"
 
 UPDATED_JSON=$(echo $ORIGINAL_INDEX_JSON | jq --arg "artifactURL" "$ARTIFACT_URL/$VER/$PRODUCT" '. + {"'$VER'": $artifactURL}') || exit $?
 echo "Updated JSON is $UPDATED_JSON"
 
 cd build/${CONFIGURATION}-universal/ || exit $?
-if [ -f $PRODUCT ]; then
-        rm $PRODUCT
+if [ -f ${PRODUCT} ]; then
+        rm ${PRODUCT}
 fi
-zip -r $PRODUCT *
+zip -r ${PRODUCT} *
 
-ARTIFACT_MD5_CHECKSUM=$(md5 -q "$PRODUCT")
-ARTIFACT_SHA1_CHECKSUM=$(shasum -a 1 "$PRODUCT" | awk '{ print $1 }')
+ARTIFACT_MD5_CHECKSUM=$(md5 -q "${PRODUCT}")
+ARTIFACT_SHA1_CHECKSUM=$(shasum -a 1 "${PRODUCT}" | awk '{ print $1 }')
 
 echo "Uploading framework to Artifactory"
-curl -u$ARTIFACTORY_USER:$ARTIFACTORY_PASSWORD -T $PRODUCT --header "X-Checksum-MD5:${ARTIFACT_MD5_CHECKSUM}" --header "X-Checksum-Sha1:${ARTIFACT_SHA1_CHECKSUM}" "$ARTIFACT_URL/$VER/$PRODUCT"
+CURL_OUTPUT=$(curl -u$ARTIFACTORY_USER:$ARTIFACTORY_PASSWORD -T ${PRODUCT} --header "X-Checksum-MD5:${ARTIFACT_MD5_CHECKSUM}" --header "X-Checksum-Sha1:${ARTIFACT_SHA1_CHECKSUM}" "$ARTIFACT_URL/$VER/$PRODUCT")
+#rm -f "${PRODUCT}"
+check_artifactory_response "$CURL_OUTPUT" || exit $?
 
 echo "Uploading JSON to Artifactory"
 JSON_MD5_CHECKSUM=$(echo $UPDATED_JSON | md5 -q)
 JSON_SHA1_CHECKSUM=$(echo $UPDATED_JSON | shasum -a 1 | awk '{ print $1 }')
-echo $UPDATED_JSON | curl -u$ARTIFACTORY_USER:$ARTIFACTORY_PASSWORD -T - --header "X-Checksum-MD5:${JSON_MD5_CHECKSUM}" --header "X-Checksum-Sha1:${JSON_SHA1_CHECKSUM}" "$JSON_URL"
+CURL_OUTPUT=$(echo $UPDATED_JSON | curl -u$ARTIFACTORY_USER:$ARTIFACTORY_PASSWORD -T - --header "X-Checksum-MD5:${JSON_MD5_CHECKSUM}" --header "X-Checksum-Sha1:${JSON_SHA1_CHECKSUM}" "$JSON_URL")
+check_artifactory_response "$CURL_OUTPUT" || exit $?
