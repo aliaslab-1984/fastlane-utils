@@ -139,7 +139,6 @@ platform :ios do
         g = f.sub("-Universal", "")
         sh("mv \"#{f}\" \"#{g}\"")
       end
-      archive_path = new_framework_path
       deploy_framework(config_path:config_path, framework_path:new_framework_path)
     else
       deploy_framework(config_path:config_path, framework_path:archive_path + "/Products/Library/Frameworks")
@@ -183,7 +182,7 @@ platform :ios do
 
   private_lane :get_main_workspace do
     Dir.chdir("..") do
-      sh "find . -name \"*.xcworkspace\" -not -path \"*Carthage*\" -and -not -path \"*xcodeproj*\" | tr -d '\n'"
+      sh "find . -name \"*.xcworkspace\" -not -path \"*Carthage*\" -and -not -path \"*xcodeproj*\" -and -not -path \"*SourcePackages*\" | tr -d '\n'"
     end
   end
 end
