@@ -47,33 +47,33 @@ platform :ios do
 
   desc "Runs tests"
   private_lane :test do |options|
-   derived_data_path = options[:project_directory] + "/Build/"
-   clear_derived_data(derived_data_path: derived_data_path)
-   failedScan = false
+    derived_data_path = options[:project_directory] + "/Build/"
+    clear_derived_data(derived_data_path: derived_data_path)
+    failedScan = false
 
-   begin
-     scan(workspace: get_main_workspace,
-       scheme: options[:scheme],
-       clean: true,
-       code_coverage: true,
-       derived_data_path: derived_data_path)
-   rescue => ex
+    begin
+      scan(workspace: get_main_workspace,
+      scheme: options[:scheme],
+      clean: true,
+      code_coverage: true,
+      derived_data_path: derived_data_path)
+    rescue => ex
       failedScan = true
       puts ex
-   end
+    end
 
-   options[:derived_data_path] = derived_data_path
-   # TODO: esiste un plugin per fastlane (da provare con Xcode 11): https://github.com/TitouanVanBelle/fastlane-plugin-xchtmlreport
-   Dir.chdir("..") do
-   	sh "xchtmlreport -r #{"\"" + derived_data_path + "\"/Logs/Test/*.xcresult/"}"
-   end
+    options[:derived_data_path] = derived_data_path
+    # TODO: esiste un plugin per fastlane (da provare con Xcode 11): https://github.com/TitouanVanBelle/fastlane-plugin-xchtmlreport
+    Dir.chdir("..") do
+      sh "xchtmlreport -r #{"\"" + derived_data_path + "\"/Logs/Test/*.xcresult/"}"
+    end
 
-   extract_coverage(options)
+    extract_coverage(options)
 
-   if failedScan
+    if failedScan
        UI.error "Scan failed"
        raise 'Scan failed'
-   end
+    end
   end
 
   desc "Runs SDK tests for projects without a workspace"
