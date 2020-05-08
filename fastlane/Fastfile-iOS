@@ -127,7 +127,7 @@ platform :ios do
 
   desc "Rebuilds the framework and publishes it to Artifactory"
   lane :build_deploy_framework do |options|
-    config_path = "../#{get_artifactory_config(config_name: options[:config_name])}"
+    config_path = get_artifactory_config(config_name: options[:config_name])
     scheme = sh("cat \"#{config_path}\" | grep scheme | cut -d= -f2 | tr -d '\n'")
     archive_path = archive(scheme: scheme, skip_archive: options[:skip_archive])
 
@@ -177,10 +177,7 @@ platform :ios do
       sh("mv \"#{f}\" \"#{g}\"")
     end
 
-    Dir.glob(framework_path + "*.framework").each do |fp|
-      UI.message "Framework path: #{fp}"
-      fp
-    end
+    framework_path
   end
 
   private_lane :get_artifactory_config do |options|
