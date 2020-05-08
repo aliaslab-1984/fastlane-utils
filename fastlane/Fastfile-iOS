@@ -176,7 +176,9 @@ platform :ios do
 
   private_lane :get_artifactory_config do |options|
     Dir.chdir("..") do
-      sh "find . -name \"#{options[:config_name]}\" | tr -d '\n'"
+      artifactory_config = Dir.glob("./**/#{options[:config_name]}")[0]
+      # from relative: "./relative/artifactory.properties" to absolute: "abs/path/relative/artifactory.properties"
+      artifactory_config.sub(".", Dir.pwd)
     end
   end
 
