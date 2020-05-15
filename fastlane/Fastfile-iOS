@@ -132,7 +132,14 @@ platform :ios do
     config_path = get_artifactory_config(config_name: options[:config_name])
     scheme = sh("cat \"#{config_path}\" | grep scheme | cut -d= -f2 | tr -d '\n'")
     archive_path = archive(scheme: scheme, skip_archive: options[:skip_archive])
-    File.open("archive_path.txt", 'w') { |file| file.write(archive_path) }
+    archive_file = "archive_path.txt"
+    if archive_path != nil
+        File.open(archive_file, 'w') { |file| file.write(archive_path) }
+    else
+        if Dir.exist?(archive_file)
+            File.delete(archive_file)
+        end
+    end
   end
 
   desc "Publishes the framework to Artifactory"
@@ -172,7 +179,7 @@ platform :ios do
       ENV["CONFIGURATION"] = "Release"
       ENV["BUILD_DIR"] = options[:build_dir]
 
-      sh "curl https://raw.githubusercontent.com/aliaslab-1984/fastlane-utils/master/build_xcframework.sh  | bash -s -- -f \"#{options[:project_name]}\""
+      sh "curl https://raw.githubusercontent.com/aliaslab-1984/fastlane-utils/master/build_xcframework.sh | bash -s -- -f \"#{options[:project_name]}\""
     end
   end
 
@@ -185,6 +192,13 @@ platform :ios do
     end
   end
 
+  desc "Checks universal framework"
+  private_lane :check_universal_framework do |options|
+    framework_bin = get_framework_bin(deployment_info_directory: options[:sdk_project_directory])
+    architectures = sh("lipo -archs \"#{framework_bin}\"").split(" ")
+    UI.header "Architectures: #{architectures}"
+    sh "curl https://raw.githubusercontent.com/aliaslab-1984/fastlane-utils/master/check_framework.sh | bash -s -- \"#{framework_bin}\""
+  end
 
   private_lane :extract_coverage do |options|
     derived_data_path = options[:derived_data_path]
@@ -227,6 +241,15 @@ platform :ios do
     framework_path
   end
 
+  private_lane :get_framework_bin do |options|
+      framework_path_file = "../" + options[:deployment_info_directory] + "/deployment_path.txt"
+      file = File.open framework_path_file
+      file.gets
+      bin = file.gets
+      file.close
+      bin.chomp
+  end
+
   private_lane :get_artifactory_config do |options|
     Dir.chdir("..") do
       artifactory_config = Dir.glob("./**/#{options[:config_name]}")[0]
@@ -240,4 +263,5 @@ platform :ios do
       sh "find . -name \"*.xcworkspace\" -not -path \"*Carthage*\" -and -not -path \"*xcodeproj*\" -and -not -path \"*SourcePackages*\" | tr -d '\n'"
     end
   end
+
 end
