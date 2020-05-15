@@ -108,7 +108,9 @@ platform :ios do
   lane :deploy_framework do |options|
     config_path = options[:config_path]
     framework_path = options[:framework_path]
-    sh "curl https://raw.githubusercontent.com/aliaslab-1984/fastlane-utils/master/artifactory_publish.sh | bash -s -- -c \"#{config_path}\" -f \"#{framework_path}\""
+    xc = options.key?(:xc) ? " -x" : ""
+
+    sh "curl https://raw.githubusercontent.com/aliaslab-1984/fastlane-utils/master/artifactory_publish.sh | bash -s -- -c \"#{config_path}\" -f \"#{framework_path}\"#{xc}"
   end
 
   desc "Build a static library"
