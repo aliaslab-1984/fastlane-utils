@@ -105,7 +105,7 @@ platform :ios do
   end
 
   desc "Publishes the SDK framework to Artifactory"
-  lane :deploy_framework do |options|
+  private_lane :deploy_framework do |options|
     config_path = options[:config_path]
     framework_path = options[:framework_path]
     xc = options.key?(:xc) ? " -x" : ""
@@ -128,14 +128,16 @@ platform :ios do
   end
 
   desc "Rebuilds the framework"
-  lane :build_framework do |options|
+  private_lane :build_framework do |options|
     config_path = get_artifactory_config(config_name: options[:config_name])
     scheme = sh("cat \"#{config_path}\" | grep scheme | cut -d= -f2 | tr -d '\n'")
     archive_path = archive(scheme: scheme, skip_archive: options[:skip_archive])
+    File.open("archive_path.txt", 'w') { |file| file.write(archive_path) }
   end
 
   desc "Publishes the framework to Artifactory"
-  lane :deploy_built_framework do |options|
+  private_lane :deploy_built_framework do |options|
+    archive_path = File.read("archive_path.txt")
     config_path = get_artifactory_config(config_name: options[:config_name])
     if !Dir.exist?("#{archive_path}")
       framework_path = get_framework_path(deployment_info_directory: options[:sdk_project_directory])
@@ -146,6 +148,7 @@ platform :ios do
   end
 
   # DEPRECATED - prefer build_framework + deploy_built_framework
+=begin
   desc "Rebuilds the framework and publishes it to Artifactory"
   lane :build_deploy_framework do |options|
     config_path = get_artifactory_config(config_name: options[:config_name])
@@ -159,6 +162,29 @@ platform :ios do
       deploy_framework(config_path:config_path, framework_path:archive_path + "/Products/Library/Frameworks")
     end
   end
+=end
+
+  desc "Builds XCFramework"
+  private_lane :build_xc_framework do |options|
+    Dir.chdir("../" + options[:sdk_directory]) do
+
+      ENV["PROJECT_DIR"] = Dir.pwd
+      ENV["CONFIGURATION"] = "Release"
+      ENV["BUILD_DIR"] = options[:build_dir]
+
+      sh "curl https://raw.githubusercontent.com/aliaslab-1984/fastlane-utils/master/build_xcframework.sh  | bash -s -- -f \"#{options[:project_name]}\""
+    end
+  end
+
+  desc "Deploys XCFramework"
+  private_lane :deploy_xc_framework do |options|
+    config_path = get_artifactory_config(config_name: options[:artifactory_properties])
+    Dir.chdir("../" + options[:sdk_directory]) do
+      xcframework_path = "Output/" + options[:project_name].gsub(/ /, '_') + "-Release"
+      deploy_framework(config_path: config_path, framework_path: xcframework_path, xc: true)
+    end
+  end
+
 
   private_lane :extract_coverage do |options|
     derived_data_path = options[:derived_data_path]
