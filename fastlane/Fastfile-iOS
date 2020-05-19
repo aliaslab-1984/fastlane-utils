@@ -130,7 +130,7 @@ platform :ios do
   desc "Rebuilds the framework"
   private_lane :build_framework do |options|
     archive_file = "archive_path.txt"
-    if Dir.exist?(archive_file)
+    if File.exist?(archive_file)
         File.delete(archive_file)
     end
     config_path = get_artifactory_config(config_name: options[:config_name])
@@ -145,7 +145,12 @@ platform :ios do
 
   desc "Publishes the framework to Artifactory"
   private_lane :deploy_built_framework do |options|
-    archive_path = File.read("archive_path.txt")
+    archive_path = ""
+    archive_file = "archive_path.txt"
+    if File.exist?(archive_file)
+      archive_path = File.read("archive_path.txt")
+    end
+    
     config_path = get_artifactory_config(config_name: options[:config_name])
     if !Dir.exist?(archive_path)
       framework_path = get_framework_path(deployment_info_directory: options[:sdk_project_directory])
