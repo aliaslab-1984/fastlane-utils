@@ -46,10 +46,10 @@ if [ -d "${OUTPUT_FRAMEWORK}" ]; then
 fi
 
 # Creates ${SIMULATOR_LIBRARY_PATH}.xcarchive
-xcodebuild archive -scheme "${SCHEME}" -sdk iphoneos -archivePath "${SIMULATOR_LIBRARY_PATH}" SKIP_INSTALL=NO BUILD_LIBRARY_FOR_DISTRIBUTION=YES
+xcodebuild archive -scheme "${SCHEME}" -sdk iphoneos -archivePath "${SIMULATOR_LIBRARY_PATH}" SKIP_INSTALL=NO BUILD_LIBRARY_FOR_DISTRIBUTION=YES || exit $?
 
 # Creates ${DEVICE_LIBRARY_PATH}.xcarchive
-xcodebuild archive -scheme "${SCHEME}" -sdk iphonesimulator -archivePath "${DEVICE_LIBRARY_PATH}" SKIP_INSTALL=NO BUILD_LIBRARY_FOR_DISTRIBUTION=YES
+xcodebuild archive -scheme "${SCHEME}" -sdk iphonesimulator -archivePath "${DEVICE_LIBRARY_PATH}" SKIP_INSTALL=NO BUILD_LIBRARY_FOR_DISTRIBUTION=YES || exit $? 
 
 # Creates the XCFramework
 xcodebuild -create-xcframework -framework "${SIMULATOR_LIBRARY_PATH}${FRAMEWORK_POSTFIX}" -framework "${DEVICE_LIBRARY_PATH}${FRAMEWORK_POSTFIX}" -output "${OUTPUT_FRAMEWORK}"
