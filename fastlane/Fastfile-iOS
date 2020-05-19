@@ -150,7 +150,7 @@ platform :ios do
     if File.exist?(archive_file)
       archive_path = File.read("archive_path.txt")
     end
-    
+
     config_path = get_artifactory_config(config_name: options[:config_name])
     if !Dir.exist?(archive_path)
       framework_path = get_framework_path(deployment_info_directory: options[:sdk_project_directory])
@@ -248,7 +248,7 @@ platform :ios do
   end
 
   private_lane :get_framework_bin do |options|
-      framework_path_file = "../" + options[:deployment_info_directory] + "/deployment_path.txt"
+      framework_path_file = "../#{options[:deployment_info_directory]}/deployment_path.txt"
       file = File.open framework_path_file
       file.gets
       bin = file.gets
