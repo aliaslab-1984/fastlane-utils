@@ -129,16 +129,17 @@ platform :ios do
 
   desc "Rebuilds the framework"
   private_lane :build_framework do |options|
+    archive_file = "archive_path.txt"
+    if Dir.exist?(archive_file)
+        File.delete(archive_file)
+    end
     config_path = get_artifactory_config(config_name: options[:config_name])
     scheme = sh("cat \"#{config_path}\" | grep scheme | cut -d= -f2 | tr -d '\n'")
     archive_path = archive(scheme: scheme, skip_archive: options[:skip_archive])
-    archive_file = "archive_path.txt"
     if archive_path != nil
         File.open(archive_file, 'w') { |file| file.write(archive_path) }
-    else
-        if Dir.exist?(archive_file)
-            File.delete(archive_file)
-        end
+        UI.success "Framework archived in:"
+        UI.success archive_path
     end
   end
 
@@ -146,7 +147,7 @@ platform :ios do
   private_lane :deploy_built_framework do |options|
     archive_path = File.read("archive_path.txt")
     config_path = get_artifactory_config(config_name: options[:config_name])
-    if !Dir.exist?("#{archive_path}")
+    if !Dir.exist?(archive_path)
       framework_path = get_framework_path(deployment_info_directory: options[:sdk_project_directory])
       deploy_framework(config_path:config_path, framework_path:framework_path)
     else
