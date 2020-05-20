@@ -16,6 +16,9 @@
 default_platform(:ios)
 
 platform :ios do
+
+  ARCHIVE_FILE = "archive_path.txt"
+
   desc "Bootstraps dependencies"
   private_lane :bootstrap do |options|
     Dir.chdir(options[:project_directory]) do
@@ -130,15 +133,14 @@ platform :ios do
 
   desc "Rebuilds the framework"
   private_lane :build_framework do |options|
-    archive_file = "archive_path.txt"
-    if File.exist?(archive_file)
-        File.delete(archive_file)
+    if File.exist?(ARCHIVE_FILE)
+        File.delete(ARCHIVE_FILE)
     end
     config_path = get_artifactory_config(config_name: options[:config_name])
     scheme = sh("cat \"#{config_path}\" | grep scheme | cut -d= -f2 | tr -d '\n'")
     archive_path = archive(scheme: scheme, skip_archive: options[:skip_archive])
     if archive_path != nil
-        File.open(archive_file, 'w') { |file| file.write(archive_path) }
+        File.open(ARCHIVE_FILE, 'w') { |file| file.write(archive_path) }
         UI.success "Framework archived in:"
         UI.success archive_path
     end
@@ -146,37 +148,10 @@ platform :ios do
 
   desc "Publishes the framework to Artifactory"
   private_lane :deploy_built_framework do |options|
-    archive_path = ""
-    archive_file = "archive_path.txt"
-    if File.exist?(archive_file)
-      archive_path = File.read("archive_path.txt")
-    end
-
+    framework_path = built_framework_path(sdk_project_directory: options[:sdk_project_directory])
     config_path = get_artifactory_config(config_name: options[:config_name])
-    if !Dir.exist?(archive_path)
-      framework_path = get_framework_path(deployment_info_directory: options[:sdk_project_directory])
-      deploy_framework(config_path:config_path, framework_path:framework_path)
-    else
-      deploy_framework(config_path:config_path, framework_path:archive_path + "/Products/Library/Frameworks")
-    end
+    deploy_framework(config_path: config_path, framework_path: framework_path)
   end
-
-  # DEPRECATED - prefer build_framework + deploy_built_framework
-=begin
-  desc "Rebuilds the framework and publishes it to Artifactory"
-  lane :build_deploy_framework do |options|
-    config_path = get_artifactory_config(config_name: options[:config_name])
-    scheme = sh("cat \"#{config_path}\" | grep scheme | cut -d= -f2 | tr -d '\n'")
-    archive_path = archive(scheme: scheme, skip_archive: options[:skip_archive])
-
-    if !Dir.exist?("#{archive_path}")
-      framework_path = get_framework_path(deployment_info_directory: options[:sdk_project_directory])
-      deploy_framework(config_path:config_path, framework_path:framework_path)
-    else
-      deploy_framework(config_path:config_path, framework_path:archive_path + "/Products/Library/Frameworks")
-    end
-  end
-=end
 
   desc "Builds XCFramework"
   private_lane :build_xc_framework do |options|
@@ -201,10 +176,21 @@ platform :ios do
 
   desc "Checks universal framework"
   private_lane :check_universal_framework do |options|
-    framework_bin = get_framework_bin(deployment_info_directory: options[:sdk_project_directory])
-    architectures = sh("lipo -archs \"#{framework_bin}\"").split(" ")
-    UI.header "Architectures: #{architectures}"
-    sh "curl https://raw.githubusercontent.com/aliaslab-1984/fastlane-utils/master/check_framework.sh | bash -s -- \"#{framework_bin}\""
+    framework_bin = get_universal_framework_bin(deployment_info_directory: options[:sdk_project_directory])
+    check_framework_bin(bin_name: framework_bin)
+  end
+
+  desc "Checks device only framework"
+  private_lane :check_device_framework do |options|
+    framework_path = get_device_framework_path()
+    framework_name = get_device_framework_name(config_name: options[:config_name])
+    check_framework_bin(bin_name: "#{framework_path}/#{framework_name}")
+  end
+
+  private_lane :check_framework_bin do |options|
+      architectures = sh("lipo -archs \"#{options[:bin_name]}\"").split(" ")
+      UI.header "Architectures: #{architectures}"
+      sh "curl https://raw.githubusercontent.com/aliaslab-1984/fastlane-utils/master/check_framework.sh | bash -s -- \"#{options[:bin_name]}\""
   end
 
   private_lane :extract_coverage do |options|
@@ -236,8 +222,28 @@ platform :ios do
     end
   end
 
-  private_lane :get_framework_path do |options|
-    framework_path_file = "../" + options[:deployment_info_directory] + "/deployment_path.txt"
+  private_lane :built_framework_path do |options|
+    device_framework_path = get_device_framework_path()
+    if device_framework_path.nil? || device_framework_path.empty?
+      device_framework_path = get_universal_framework_path(deployment_info_directory: options[:sdk_project_directory])
+    end
+    device_framework_path
+  end
+
+  lane :get_device_framework_path do
+    framework_path = nil
+    if File.exist?(ARCHIVE_FILE)
+      archive_path = File.read("archive_path.txt")
+      if Dir.exist?(archive_path)
+          framework_path = "#{archive_path}/Products/Library/Frameworks"
+      end
+    end
+    UI.success "framework_path: #{framework_path}"
+    framework_path
+  end
+
+  private_lane :get_universal_framework_path do |options|
+    framework_path_file = "../#{options[:deployment_info_directory]}/deployment_path.txt"
     framework_path = sh("head -n 1 \"#{framework_path_file}\"").chomp
 
     Dir.glob(framework_path + "*-Universal.framework").each do |f|
@@ -248,13 +254,20 @@ platform :ios do
     framework_path
   end
 
-  private_lane :get_framework_bin do |options|
+  private_lane :get_universal_framework_bin do |options|
       framework_path_file = "../#{options[:deployment_info_directory]}/deployment_path.txt"
       file = File.open framework_path_file
       file.gets
       bin = file.gets
       file.close
       bin.chomp
+  end
+
+  private_lane :get_device_framework_name do |options|
+    config_path = get_artifactory_config(config_name: options[:config_name])
+    frameworkName = sh("cat \"#{config_path}\" | grep frameworkName | cut -d= -f2").chomp
+    UI.message "frameworkName: #{frameworkName}"
+    "#{frameworkName}.framework/#{frameworkName}"
   end
 
   private_lane :get_artifactory_config do |options|
