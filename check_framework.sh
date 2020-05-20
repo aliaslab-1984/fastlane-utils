@@ -18,7 +18,7 @@ echo
 
 for ARCH in $ARCHITECTURES
 do
-	otool -l -arch $ARCH "$1" | grep -q LLVM
+	otool -l -arch $ARCH "$1" | grep -v _COV | grep -q LLVM
 	if [ $? -eq 0 ]; then
 		echo -e "\t[*] $ARCH has BITCODE"
 	else
