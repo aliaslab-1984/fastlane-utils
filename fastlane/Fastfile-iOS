@@ -101,6 +101,7 @@ platform :ios do
         scheme: options[:scheme],
         skip_package_ipa: true,
         skip_archive: options[:skip_archive],
+        xcargs: "SKIP_INSTALL=NO",
         configuration: "Release")
   end
 
