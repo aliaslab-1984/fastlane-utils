@@ -120,7 +120,8 @@ if [ -z "$FRAMEWORK_PATH" ]; then
   exit 1
 fi
 
-ARTIFACTORY_URL=$(require_property "$CONFIG_FILE_PATH" "artifactoryURL") || exit $?
+#ARTIFACTORY_URL=$(require_property "$CONFIG_FILE_PATH" "artifactoryURL") || exit $?
+ARTIFACTORY_URL=$(require_gradle_property "artifactoryURL") || exit $?
 ARTIFACTORY_USER=$(require_gradle_property "artifactoryUser") || exit $?
 ARTIFACTORY_PASSWORD=$(require_gradle_property "artifactoryPassword") || exit $?
 

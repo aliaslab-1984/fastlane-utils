@@ -7,7 +7,6 @@ echo "Archivia su Artifactory il risultato di un archive di ALCipher-Universal"
 echo "Chiamare dalla cartella contenente ALChiper.xcodeproj"
 echo
 
-
 require_property() {
   PROPERTY=$(cat "$1" | grep $2 | cut -d= -f2)
   if [ -z "$PROPERTY" ]; then
@@ -67,11 +66,15 @@ increment_ver() {
 # MAIN
 # -----------------------------------------------------
 
+# TODO: this should be a parameter
+ARTIFACT="SecureCallOTP_libCipher_iOS_Release"
+
 ARTIFACTORY_USER=$(require_gradle_property "artifactoryUser") || exit $?
 ARTIFACTORY_PASSWORD=$(require_gradle_property "artifactoryPassword") || exit $?
+ARTIFACTORY_URL=$(require_gradle_property "artifactoryURL") || exit $?
 echo "Artifactory credentials retrieved successfully"
 
-ARTIFACT_URL="https://artifactory.aliaslab.net/artifactory/SecureCallOTP_libCipher_iOS_Release"
+ARTIFACT_URL="$(ARTIFACTORY_URL)/$(ARTIFACT)"
 JSON_URL=$ARTIFACT_URL/libALCipher.json
 VARIANT="Release-universal"
 PRODUCT="libALChiper.a.zip"
@@ -92,7 +95,7 @@ echo "Updated JSON is $UPDATED_JSON"
 
 cd build/${CONFIGURATION}-universal/ || exit $?
 if [ -f ${PRODUCT} ]; then
-        rm ${PRODUCT}
+    rm ${PRODUCT}
 fi
 zip -r ${PRODUCT} *
 
