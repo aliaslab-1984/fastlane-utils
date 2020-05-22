@@ -103,7 +103,7 @@ platform :ios do
     scheme = sh("cat \"#{options[:config_path]}\" | grep scheme | cut -d= -f2 | tr -d '\n'")
     workspace = get_main_workspace()
     if workspace.nil? || workspace.empty?
-        project = sh("cat \"#{options[:config_path]}\" | grep project | cut -d= -f2").chomp
+        project = sh("cat \"#{options[:config_path]}\" | grep project | cut -d= -f2 | tr -d '\n'")
         gym(project: project,
             scheme: scheme,
             skip_package_ipa: true,
@@ -143,11 +143,16 @@ platform :ios do
     end
   end
 
-  desc "Rebuilds the framework"
-  private_lane :build_framework do |options|
+  # Called even from local fastlanes
+  private_lane :remove_archive_file do
     if File.exist?(ARCHIVE_FILE)
         File.delete(ARCHIVE_FILE)
     end
+  end
+
+  desc "Rebuilds the framework"
+  private_lane :build_framework do |options|
+    remove_archive_file()
     config_path = get_artifactory_config(config_name: options[:config_name])
     archive_path = archive(skip_archive: options[:skip_archive], config_path: config_path)
     if archive_path != nil
