@@ -56,10 +56,10 @@ platform :ios do
 
     begin
       scan(workspace: get_main_workspace,
-      scheme: options[:scheme],
-      clean: true,
-      code_coverage: true,
-      derived_data_path: derived_data_path)
+           scheme: options[:scheme],
+           clean: true,
+           code_coverage: true,
+           derived_data_path: derived_data_path)
     rescue => ex
       failedScan = true
       puts ex
@@ -100,12 +100,24 @@ platform :ios do
 
   desc "Builds and archives the specified scheme"
   private_lane :archive do |options|
-    gym(workspace: get_main_workspace,
-        scheme: options[:scheme],
-        skip_package_ipa: true,
-        skip_archive: options[:skip_archive],
-        xcargs: "SKIP_INSTALL=NO",
-        configuration: "Release")
+    scheme = sh("cat \"#{options[:config_path]}\" | grep scheme | cut -d= -f2 | tr -d '\n'")
+    workspace = get_main_workspace()
+    if workspace.nil? || workspace.empty?
+        project = sh("cat \"#{options[:config_path]}\" | grep project | cut -d= -f2").chomp
+        gym(project: project,
+            scheme: scheme,
+            skip_package_ipa: true,
+            skip_archive: options[:skip_archive],
+            xcargs: "SKIP_INSTALL=NO",
+            configuration: "Release")
+    else
+        gym(workspace: workspace,
+            scheme: scheme,
+            skip_package_ipa: true,
+            skip_archive: options[:skip_archive],
+            xcargs: "SKIP_INSTALL=NO",
+            configuration: "Release")
+    end
   end
 
   desc "Publishes the SDK framework to Artifactory"
@@ -137,8 +149,7 @@ platform :ios do
         File.delete(ARCHIVE_FILE)
     end
     config_path = get_artifactory_config(config_name: options[:config_name])
-    scheme = sh("cat \"#{config_path}\" | grep scheme | cut -d= -f2 | tr -d '\n'")
-    archive_path = archive(scheme: scheme, skip_archive: options[:skip_archive])
+    archive_path = archive(skip_archive: options[:skip_archive], config_path: config_path)
     if archive_path != nil
         File.open(ARCHIVE_FILE, 'w') { |file| file.write(archive_path) }
         UI.success "Framework archived in:"
