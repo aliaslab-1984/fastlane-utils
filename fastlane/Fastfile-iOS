@@ -174,6 +174,18 @@ platform :ios do
     end
   end
 
+  desc "Builds and check universal framework"
+  lane :build_check_universal_framework do
+    build_universal_framework()
+    check_framework_univ()
+  end
+
+  desc "Builds and check device-only framework"
+  lane :build_check_device_framework do
+    build_device_framework()
+    check_framework_dev()
+  end
+
   desc "Checks universal framework"
   private_lane :check_universal_framework do |options|
     framework_bin = get_universal_framework_bin(deployment_info_directory: options[:sdk_project_directory])
