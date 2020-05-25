@@ -199,7 +199,13 @@ platform :ios do
   desc "Builds and check device-only framework"
   lane :build_check_device_framework do
     build_device_framework()
-    check_framework_dev()
+    check_framework_xc()
+  end
+
+  desc "Builds and check XCFramework"
+  lane :build_check_xc_framework do
+    build_xcframework()
+    check_framework_xc()
   end
 
   desc "Checks universal framework"
@@ -219,6 +225,22 @@ platform :ios do
       architectures = sh("lipo -archs \"#{options[:bin_name]}\"").split(" ")
       UI.header "Architectures: #{architectures}"
       sh "curl https://raw.githubusercontent.com/aliaslab-1984/fastlane-utils/master/check_framework.sh | bash -s -- \"#{options[:bin_name]}\""
+  end
+
+  desc "Checks XCFramework"
+  private_lane :check_xc_framework do |options|
+    Dir.chdir("../" + options[:sdk_directory]) do
+      framework_name = options[:project_name].gsub(/ /, '_')
+      configuration = "Release"
+      xcframework_path = "Output/#{framework_name}-#{configuration}/#{framework_name}.xcframework"
+      Dir.glob("#{xcframework_path}/*").each do |file|
+        next if !File.directory?(file) # skip the loop if the file is not a directory
+        UI.message file
+        UI.important File.basename(file)
+        sdk = "#{file}/#{framework_name}.framework/#{framework_name}"
+        check_framework_bin(bin_name: sdk)
+      end
+    end
   end
 
   private_lane :extract_coverage do |options|
