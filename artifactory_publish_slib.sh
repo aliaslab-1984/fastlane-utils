@@ -74,7 +74,7 @@ ARTIFACTORY_PASSWORD=$(require_gradle_property "artifactoryPassword") || exit $?
 ARTIFACTORY_URL=$(require_gradle_property "artifactoryURL") || exit $?
 echo "Artifactory credentials retrieved successfully"
 
-ARTIFACT_URL="$(ARTIFACTORY_URL)/$(ARTIFACT)"
+ARTIFACT_URL=$ARTIFACTORY_URL/${ARTIFACT}
 JSON_URL=$ARTIFACT_URL/libALCipher.json
 VARIANT="Release-universal"
 PRODUCT="libALChiper.a.zip"
