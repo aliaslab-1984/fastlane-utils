@@ -199,7 +199,7 @@ platform :ios do
   desc "Builds and check device-only framework"
   lane :build_check_device_framework do
     build_device_framework()
-    check_framework_xc()
+    check_framework_dev()
   end
 
   desc "Builds and check XCFramework"
