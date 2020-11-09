@@ -89,6 +89,7 @@ echo ${ORIGINAL_INDEX_JSON} > $JSON_TEMP_FILE
 # update JSON
 sed -i -e 's/http:/https:/g' ${JSON_TEMP_FILE}
 sed -i -e 's/artifactory-int.aliaslab.net:9082/artifactory-new.aliaslab.net/g' ${JSON_TEMP_FILE}
+sed -i -e 's/artifactory-int.aliaslab.net:8082/artifactory-new.aliaslab.net/g' ${JSON_TEMP_FILE}
 
 # upload JSON
 JSON_MD5_CHECKSUM=$(cat $JSON_TEMP_FILE | md5 -q)
