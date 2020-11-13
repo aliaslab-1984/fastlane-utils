@@ -165,7 +165,7 @@ echo "================================================================="
 echo "Uploading framework to Artifactory"
 ARTIFACT_MD5_CHECKSUM=$(md5 -q "$ZIPPED_FRAMEWORK_FILE")
 ARTIFACT_SHA1_CHECKSUM=$(shasum -a 1 "$ZIPPED_FRAMEWORK_FILE" | awk '{ print $1 }')
-CURL_OUTPUT=$(curl -u$ARTIFACTORY_USER:$ARTIFACTORY_PASSWORD -T "${ZIPPED_FRAMEWORK_FILE}" --header "X-Checksum-MD5:${ARTIFACT_MD5_CHECKSUM}" --header "X-Checksum-Sha1:${ARTIFACT_SHA1_CHECKSUM}" "$ARTIFACT_URL")
+CURL_OUTPUT=$(curl -u$ARTIFACTORY_USER:$ARTIFACTORY_PASSWORD -T "${ZIPPED_FRAMEWORK_FILE}" --header "X-Checksum-MD5:${ARTIFACT_MD5_CHECKSUM}" --header "X-Checksum-Sha1:${ARTIFACT_SHA1_CHECKSUM}" --header "X-Artifactory-Last-Modified" "$ARTIFACT_URL")
 rm -f "$ZIPPED_FRAMEWORK_FILE"
 check_artifactory_response "$CURL_OUTPUT" || exit $?
 
