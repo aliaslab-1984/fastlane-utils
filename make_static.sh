@@ -13,15 +13,14 @@ UNIVERSAL_OUTPUTFOLDER=${BUILD_DIR}/${CONFIGURATION}-universal
 
 # Step 1. Build Device and Simulator versions
 # OTHER_CFLAGS="-fembed-bitcode" force BITCODE even in debug
-xcodebuild OTHER_CFLAGS="-fembed-bitcode" -target ALChiper ONLY_ACTIVE_ARCH=NO -configuration ${CONFIGURATION} -sdk iphoneos BUILD_DIR="${BUILD_DIR}" BUILD_ROOT="${BUILD_ROOT}"
-xcodebuild OTHER_CFLAGS="-fembed-bitcode" -target ALChiper -configuration ${CONFIGURATION} -sdk iphonesimulator BUILD_DIR="${BUILD_DIR}" BUILD_ROOT="${BUILD_ROOT}"
-
-# remove arm64 from simulator (Xcode 12)
-mv "${BUILD_DIR}/${CONFIGURATION}-iphonesimulator/lib${PROJECT_NAME}.a" "${BUILD_DIR}/${CONFIGURATION}-iphonesimulator/lib${PROJECT_NAME}_.a"
-lipo -remove arm64 "${BUILD_DIR}/${CONFIGURATION}-iphonesimulator/lib${PROJECT_NAME}_.a" -o "${BUILD_DIR}/${CONFIGURATION}-iphonesimulator/lib${PROJECT_NAME}.a"
+xcodebuild OTHER_CFLAGS="-fembed-bitcode" -target ALChiper ONLY_ACTIVE_ARCH=YES -configuration ${CONFIGURATION} -sdk iphoneos BUILD_DIR="${BUILD_DIR}" BUILD_ROOT="${BUILD_ROOT}"
+xcodebuild OTHER_CFLAGS="-fembed-bitcode" -target ALChiper ONLY_ACTIVE_ARCH=NO -arch i386 -arch x86_64 -configuration ${CONFIGURATION} -sdk iphonesimulator BUILD_DIR="${BUILD_DIR}" BUILD_ROOT="${BUILD_ROOT}"
 
 # make sure the output directory exists
 mkdir -p "${UNIVERSAL_OUTPUTFOLDER}"
+
+lipo -info "${BUILD_DIR}/${CONFIGURATION}-iphoneos/lib${PROJECT_NAME}.a"
+lipo -info "${BUILD_DIR}/${CONFIGURATION}-iphonesimulator/lib${PROJECT_NAME}.a"
 
 # Step 2. Create universal binary file using lipo
 lipo -create -output "${UNIVERSAL_OUTPUTFOLDER}/lib${PROJECT_NAME}.a" "${BUILD_DIR}/${CONFIGURATION}-iphoneos/lib${PROJECT_NAME}.a" "${BUILD_DIR}/${CONFIGURATION}-iphonesimulator/lib${PROJECT_NAME}.a"
@@ -54,4 +53,4 @@ do
 done
 echo "------------------------------------------------"
 
-#open "${UNIVERSAL_OUTPUTFOLDER}/"
+open "${UNIVERSAL_OUTPUTFOLDER}/"
