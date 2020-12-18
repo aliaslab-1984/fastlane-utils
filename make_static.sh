@@ -16,6 +16,10 @@ UNIVERSAL_OUTPUTFOLDER=${BUILD_DIR}/${CONFIGURATION}-universal
 xcodebuild OTHER_CFLAGS="-fembed-bitcode" -target ALChiper ONLY_ACTIVE_ARCH=NO -configuration ${CONFIGURATION} -sdk iphoneos BUILD_DIR="${BUILD_DIR}" BUILD_ROOT="${BUILD_ROOT}"
 xcodebuild OTHER_CFLAGS="-fembed-bitcode" -target ALChiper -configuration ${CONFIGURATION} -sdk iphonesimulator BUILD_DIR="${BUILD_DIR}" BUILD_ROOT="${BUILD_ROOT}"
 
+# remove arm64 from simulator (Xcode 12)
+mv "${BUILD_DIR}/${CONFIGURATION}-iphonesimulator/lib${PROJECT_NAME}.a" "${BUILD_DIR}/${CONFIGURATION}-iphonesimulator/lib${PROJECT_NAME}_.a"
+lipo -remove arm64 "${BUILD_DIR}/${CONFIGURATION}-iphonesimulator/lib${PROJECT_NAME}_.a" -o "${BUILD_DIR}/${CONFIGURATION}-iphonesimulator/lib${PROJECT_NAME}.a"
+
 # make sure the output directory exists
 mkdir -p "${UNIVERSAL_OUTPUTFOLDER}"
 
