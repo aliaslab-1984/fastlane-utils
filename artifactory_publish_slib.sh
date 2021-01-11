@@ -1,11 +1,31 @@
 #!/usr/bin/env bash
 
-# TODO leggere $ARCHIVE_PATH da Xcode ??
-
 echo
 echo "Archivia su Artifactory il risultato di un archive di ALCipher-Universal"
 echo "Chiamare dalla cartella contenente ALChiper.xcodeproj"
+echo -e "\n$0 -h for more info"
 echo
+
+usage() {
+	echo
+	echo "Usage: $0 -h|-u|-d|-s version"
+	echo -e "\t-u \tupload universal static library"
+	echo -e "\t-d \tupload device-only static library"
+	echo -e "\t-s \tupload simulator-only static library"
+	echo -e "\t-h \tthis help"
+	echo
+	echo "es. $0 -d 1.0.44"
+	echo
+}
+
+
+require_ver() {
+	if [ -z $1 ]; then
+		echo "Indicare la versione"
+		echo "    es. $0 -d 1.0.44"
+		exit
+	fi
+}
 
 require_property() {
   PROPERTY=$(cat "$1" | grep $2 | cut -d= -f2)
@@ -20,19 +40,6 @@ require_gradle_property() {
 	echo $(require_property ~/.gradle/gradle.properties $1)
 }
 
-check_artifactory_response() {
-  echo "Response is: $1"
-  if [ -z "$1" ]; then
-    echo "No response from Artifactory"
-    exit 1
-  fi
-  ERROR_COUNT=$(echo $1 | jq '.errors? | length')
-  if [ "$ERROR_COUNT" -gt "0" ]; then
-    echo "Upload failed"
-    exit 1
-  fi
-}
-
 get_current_index_json() {
   SEPARATOR="RET_CODE"
   CURL_OUTPUT=$(curl -u$1:$2 -s -w "\n$SEPARATOR%{http_code}\n" "$3") || exit $?
@@ -44,71 +51,65 @@ get_current_index_json() {
   esac
 }
 
-increment_ver() {
-    version="$1"
-    major=0
-    minor=0
-    build=0
-
-    # break down the version number into it's components
-    regex="([0-9]+).([0-9]+).([0-9]+)"
-    if [[ $version =~ $regex ]]; then
-      major="${BASH_REMATCH[1]}"
-      minor="${BASH_REMATCH[2]}"
-      build="${BASH_REMATCH[3]}"
-    fi
-    build=$(echo $build + 1 | bc)
-    updated_version=${major}.${minor}.${build}
-    echo $updated_version
-}
-
 # -----------------------------------------------------
 # MAIN
 # -----------------------------------------------------
 
-# TODO: this should be a parameter
-ARTIFACT="SecureCallOTP_libCipher_iOS_Release"
+if [ "$1" = "-h" ]; then
+	usage
+	exit
+fi
+
+require_ver $2
+VER=$2
 
 ARTIFACTORY_USER=$(require_gradle_property "artifactoryUser") || exit $?
 ARTIFACTORY_PASSWORD=$(require_gradle_property "artifactoryPassword") || exit $?
-ARTIFACTORY_URL=$(require_gradle_property "artifactoryURL") || exit $?
 echo "Artifactory credentials retrieved successfully"
 
-ARTIFACT_URL=$ARTIFACTORY_URL/${ARTIFACT}
-JSON_URL=$ARTIFACT_URL/libALCipher.json
-VARIANT="Release-universal"
-PRODUCT="libALChiper.a.zip"
-CONFIGURATION="Release"
+BUILD_DIR=$(xcodebuild -project ALChiper.xcodeproj -target "ALCipher-Universal" -showBuildSettings | grep -w BUILD_DIR | awk '{print $3}')
 
-echo "Downloading JSON from Artifactory"
-ORIGINAL_INDEX_JSON=$(get_current_index_json "$ARTIFACTORY_USER" "$ARTIFACTORY_PASSWORD" "$JSON_URL") || exit $?
-#echo $ORIGINAL_INDEX_JSON > orig.json
-ORIGINAL_VER=$(echo $ORIGINAL_INDEX_JSON | jq 'keys[-1]')
-#echo $ORIGINAL_VER
-VER=$(increment_ver $ORIGINAL_VER)
-echo "------------------------------------------------"
-echo "----         Uploading build $VER         ----"
-echo "------------------------------------------------"
-
-UPDATED_JSON=$(echo $ORIGINAL_INDEX_JSON | jq --arg "artifactURL" "$ARTIFACT_URL/$VER/$PRODUCT" '. + {"'$VER'": $artifactURL}') || exit $?
-echo "Updated JSON is $UPDATED_JSON"
-
-cd build/${CONFIGURATION}-universal/ || exit $?
-if [ -f ${PRODUCT} ]; then
-    rm ${PRODUCT}
+if [ "$1" = "-u" ]; then
+	TYPE="universal"
+	VARIANT="Release-$TYPE"
+	PRODUCT="libALChiper.a.zip"
 fi
-zip -r ${PRODUCT} *
+if [ "$1" = "-s" ]; then
+	TYPE="iphonesimulator"
+	VARIANT="Release-$TYPE"
+	PRODUCT="libALChiper.a.simul.zip"
+fi
+if [ "$1" = "-d" ]; then
+	TYPE="iphoneos"
+	VARIANT="Release-$TYPE"
+	PRODUCT="libALChiper.a.device.zip"
+fi
 
-ARTIFACT_MD5_CHECKSUM=$(md5 -q "${PRODUCT}")
-ARTIFACT_SHA1_CHECKSUM=$(shasum -a 1 "${PRODUCT}" | awk '{ print $1 }')
+echo -e "\n>> Preparing $PRODUCT in \n${BUILD_DIR}/${VARIANT}\n"
+
+cd "${BUILD_DIR}/${VARIANT}"
+if [ -f $PRODUCT ]; then
+	rm $PRODUCT
+fi
+zip -r $PRODUCT *
 
 echo "Uploading framework to Artifactory"
-CURL_OUTPUT=$(curl -u$ARTIFACTORY_USER:$ARTIFACTORY_PASSWORD -T ${PRODUCT} --header "X-Checksum-MD5:${ARTIFACT_MD5_CHECKSUM}" --header "X-Checksum-Sha1:${ARTIFACT_SHA1_CHECKSUM}" "$ARTIFACT_URL/$VER/$PRODUCT")
-#rm -f "${PRODUCT}"
-check_artifactory_response "$CURL_OUTPUT" || exit $?
+ARTIFACT_URL="https://artifactory-new.aliaslab.net/artifactory/SecureCallOTP_libCipher_iOS_Release/$TYPE"
+ARTIFACT_MD5_CHECKSUM=$(md5 -q "$PRODUCT")
+ARTIFACT_SHA1_CHECKSUM=$(shasum -a 1 "$PRODUCT" | awk '{ print $1 }')
+
+JSON_URL=$ARTIFACT_URL/libALCipher.json
+
+curl -u$ARTIFACTORY_USER:$ARTIFACTORY_PASSWORD -T $PRODUCT --header "X-Checksum-MD5:${ARTIFACT_MD5_CHECKSUM}" --header "X-Checksum-Sha1:${ARTIFACT_SHA1_CHECKSUM}" "$ARTIFACT_URL/$VER/$PRODUCT"
+
+echo
+ORIGINAL_INDEX_JSON=$(get_current_index_json "$ARTIFACTORY_USER" "$ARTIFACTORY_PASSWORD" "$JSON_URL") || exit $?
+#echo $ORIGINAL_INDEX_JSON
+UPDATED_JSON=$(echo $ORIGINAL_INDEX_JSON | jq --arg "artifactURL" "$ARTIFACT_URL/$VER/$PRODUCT" '. + {"'$VER'": $artifactURL}') || exit $?
+echo "Updated JSON is $UPDATED_JSON"
 
 echo "Uploading JSON to Artifactory"
 JSON_MD5_CHECKSUM=$(echo $UPDATED_JSON | md5 -q)
 JSON_SHA1_CHECKSUM=$(echo $UPDATED_JSON | shasum -a 1 | awk '{ print $1 }')
-CURL_OUTPUT=$(echo $UPDATED_JSON | curl -u$ARTIFACTORY_USER:$ARTIFACTORY_PASSWORD -T - --header "X-Checksum-MD5:${JSON_MD5_CHECKSUM}" --header "X-Checksum-Sha1:${JSON_SHA1_CHECKSUM}" "$JSON_URL")
-check_artifactory_response "$CURL_OUTPUT" || exit $?
+echo $UPDATED_JSON | curl -u$ARTIFACTORY_USER:$ARTIFACTORY_PASSWORD -T - --header "X-Checksum-MD5:${JSON_MD5_CHECKSUM}" --header "X-Checksum-Sha1:${JSON_SHA1_CHECKSUM}" "$JSON_URL"
+

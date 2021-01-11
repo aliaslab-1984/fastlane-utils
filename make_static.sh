@@ -1,10 +1,34 @@
 #!/usr/bin/env bash
 
+usage() {
+	echo
+	echo "Usage: $0 [-h|-d|-s]"
+	echo -e "\tno option \tbuild universal static library"
+	echo -e "\t-d \t\tbuild device-only static library"
+	echo -e "\t-s \t\tbuild simulator-only static library"
+	echo -e "\t-h \t\tthis help"
+	echo
+}
+
+partialInfo() {
+	echo ">> built ${CONFIGURATION}-$1 in >>"
+	echo "${BUILD_DIR}"
+	echo
+	lipo -info "${BUILD_DIR}/${CONFIGURATION}-$1/lib${PROJECT_NAME}.a"
+	echo
+}
+
+
+if [ "$1" = "-h" ]; then
+	usage
+	exit
+fi
+
 CONFIGURATION="Release"
 TARGET="ALCipher-Universal"
 PROJECT="ALChiper.xcodeproj"
-BUILD_DIR=$(xcodebuild -project $PROJECT -target "$TARGET" -showBuildSettings | grep -w BUILD_DIR | cut -d= -f2)
-BUILD_ROOT=$(xcodebuild -project $PROJECT -target "$TARGET" -showBuildSettings | grep -w BUILD_ROOT | cut -d= -f2)
+BUILD_DIR=$(xcodebuild -project $PROJECT -target "$TARGET" -showBuildSettings | grep -w BUILD_DIR | awk '{print $3}')
+BUILD_ROOT=$(xcodebuild -project $PROJECT -target "$TARGET" -showBuildSettings | grep -w BUILD_ROOT | awk '{print $3}')
 PROJECT_NAME=$(xcodebuild -project $PROJECT -target "$TARGET" -showBuildSettings | grep -w PROJECT_NAME | awk '{print $3}')
 echo "Building $PROJECT_NAME..."
 
@@ -13,8 +37,22 @@ UNIVERSAL_OUTPUTFOLDER=${BUILD_DIR}/${CONFIGURATION}-universal
 
 # Step 1. Build Device and Simulator versions
 # OTHER_CFLAGS="-fembed-bitcode" force BITCODE even in debug
-xcodebuild OTHER_CFLAGS="-fembed-bitcode" -target ALChiper ONLY_ACTIVE_ARCH=YES -configuration ${CONFIGURATION} -sdk iphoneos BUILD_DIR="${BUILD_DIR}" BUILD_ROOT="${BUILD_ROOT}"
-xcodebuild OTHER_CFLAGS="-fembed-bitcode" -target ALChiper ONLY_ACTIVE_ARCH=NO -arch i386 -arch x86_64 -configuration ${CONFIGURATION} -sdk iphonesimulator BUILD_DIR="${BUILD_DIR}" BUILD_ROOT="${BUILD_ROOT}"
+
+if [ "$1" != "-s" ]; then
+	xcodebuild clean build OTHER_CFLAGS="-fembed-bitcode" -target ALChiper ONLY_ACTIVE_ARCH=YES -configuration ${CONFIGURATION} -sdk iphoneos BUILD_DIR="${BUILD_DIR}" BUILD_ROOT="${BUILD_ROOT}"
+fi
+if [ "$1" != "-d" ]; then
+	xcodebuild clean build OTHER_CFLAGS="-fembed-bitcode" -target ALChiper ONLY_ACTIVE_ARCH=NO -arch i386 -arch x86_64 -configuration ${CONFIGURATION} -sdk iphonesimulator BUILD_DIR="${BUILD_DIR}" BUILD_ROOT="${BUILD_ROOT}"
+fi
+
+if [ "$1" = "-d" ]; then
+	partialInfo "iphoneos"
+	exit
+fi
+if [ "$1" = "-s" ]; then
+	partialInfo "iphonesimulator"
+	exit
+fi
 
 # make sure the output directory exists
 mkdir -p "${UNIVERSAL_OUTPUTFOLDER}"
