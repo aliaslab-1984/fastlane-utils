@@ -1,30 +1,22 @@
 #!/usr/bin/env bash
 
 echo
-echo "Archivia su Artifactory il risultato di un archive di ALCipher-Universal"
+echo "Archivia su Artifactory il risultato una build statica di ALCipher"
 echo "Chiamare dalla cartella contenente ALChiper.xcodeproj"
 echo -e "\n$0 -h for more info"
 echo
 
 usage() {
 	echo
-	echo "Usage: $0 -h|-u|-d|-s version"
+	echo "Usage: $0 -h|-u|-d|-s [version]"
 	echo -e "\t-u \tupload universal static library"
 	echo -e "\t-d \tupload device-only static library"
 	echo -e "\t-s \tupload simulator-only static library"
 	echo -e "\t-h \tthis help"
+	echo "if there is no version it's incremented from Artifactory's JSON"
 	echo
 	echo "es. $0 -d 1.0.44"
 	echo
-}
-
-
-require_ver() {
-	if [ -z $1 ]; then
-		echo "Indicare la versione"
-		echo "    es. $0 -d 1.0.44"
-		exit
-	fi
 }
 
 require_property() {
@@ -34,6 +26,19 @@ require_property() {
     exit 1
   fi
   echo $PROPERTY
+}
+
+check_artifactory_response() {
+  echo "Response is: $1"
+  if [ -z "$1" ]; then
+    echo "No response from Artifactory"
+    exit 1
+  fi
+  ERROR_COUNT=$(echo $1 | jq '.errors? | length')
+  if [ "$ERROR_COUNT" -gt "0" ]; then
+    echo "Upload failed"
+    exit 1
+  fi
 }
 
 require_gradle_property() {
@@ -51,23 +56,45 @@ get_current_index_json() {
   esac
 }
 
+increment_ver() {
+    version="$1"
+    major=0
+    minor=0
+    build=0
+
+    # break down the version number into it's components
+    regex="([0-9]+).([0-9]+).([0-9]+)"
+    if [[ $version =~ $regex ]]; then
+      major="${BASH_REMATCH[1]}"
+      minor="${BASH_REMATCH[2]}"
+      build="${BASH_REMATCH[3]}"
+    fi
+    build=$(echo $build + 1 | bc)
+    updated_version=${major}.${minor}.${build}
+    echo $updated_version
+}
+
 # -----------------------------------------------------
 # MAIN
 # -----------------------------------------------------
+
+set -e
 
 if [ "$1" = "-h" ]; then
 	usage
 	exit
 fi
 
-require_ver $2
-VER=$2
-
 ARTIFACTORY_USER=$(require_gradle_property "artifactoryUser") || exit $?
 ARTIFACTORY_PASSWORD=$(require_gradle_property "artifactoryPassword") || exit $?
 echo "Artifactory credentials retrieved successfully"
 
-BUILD_DIR=$(xcodebuild -project ALChiper.xcodeproj -target "ALCipher-Universal" -showBuildSettings | grep -w BUILD_DIR | awk '{print $3}')
+TARGET="ALCipher-Universal"
+PROJECT="ALChiper.xcodeproj"
+BUILD_DIR=$(xcodebuild -project $PROJECT -target $TARGET -showBuildSettings | grep -w BUILD_DIR | awk '{print $3}')
+if [ -z $BUILD_DIR ]; then
+	exit
+fi
 
 if [ "$1" = "-u" ]; then
 	TYPE="universal"
@@ -93,20 +120,28 @@ if [ -f $PRODUCT ]; then
 fi
 zip -r $PRODUCT *
 
-echo "Uploading framework to Artifactory"
 ARTIFACT_URL="https://artifactory-new.aliaslab.net/artifactory/SecureCallOTP_libCipher_iOS_Release/$TYPE"
 ARTIFACT_MD5_CHECKSUM=$(md5 -q "$PRODUCT")
 ARTIFACT_SHA1_CHECKSUM=$(shasum -a 1 "$PRODUCT" | awk '{ print $1 }')
 
 JSON_URL=$ARTIFACT_URL/libALCipher.json
 
-curl -u$ARTIFACTORY_USER:$ARTIFACTORY_PASSWORD -T $PRODUCT --header "X-Checksum-MD5:${ARTIFACT_MD5_CHECKSUM}" --header "X-Checksum-Sha1:${ARTIFACT_SHA1_CHECKSUM}" "$ARTIFACT_URL/$VER/$PRODUCT"
-
-echo
+echo "Downloading JSON from Artifactory"
 ORIGINAL_INDEX_JSON=$(get_current_index_json "$ARTIFACTORY_USER" "$ARTIFACTORY_PASSWORD" "$JSON_URL") || exit $?
 #echo $ORIGINAL_INDEX_JSON
+ORIGINAL_VER=$(echo $ORIGINAL_INDEX_JSON | jq 'keys[-1]')
+if [ -z $2 ]; then
+	VER=$(increment_ver $ORIGINAL_VER)
+else
+	VER=$2
+fi
+
 UPDATED_JSON=$(echo $ORIGINAL_INDEX_JSON | jq --arg "artifactURL" "$ARTIFACT_URL/$VER/$PRODUCT" '. + {"'$VER'": $artifactURL}') || exit $?
 echo "Updated JSON is $UPDATED_JSON"
+
+echo
+echo "Uploading framework to Artifactory"
+curl -u$ARTIFACTORY_USER:$ARTIFACTORY_PASSWORD -T $PRODUCT --header "X-Checksum-MD5:${ARTIFACT_MD5_CHECKSUM}" --header "X-Checksum-Sha1:${ARTIFACT_SHA1_CHECKSUM}" "$ARTIFACT_URL/$VER/$PRODUCT"
 
 echo "Uploading JSON to Artifactory"
 JSON_MD5_CHECKSUM=$(echo $UPDATED_JSON | md5 -q)

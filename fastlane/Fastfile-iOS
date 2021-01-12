@@ -129,19 +129,53 @@ platform :ios do
     sh "curl https://raw.githubusercontent.com/aliaslab-1984/fastlane-utils/master/artifactory_publish.sh | bash -s -- -c \"#{config_path}\" -f \"#{framework_path}\"#{xc}"
   end
 
-  desc "Build a static library"
+# -- Build static 
+
+  desc "Build a universal static library"
   private_lane :build_static_library do |options|
     Dir.chdir("../" + options[:prj_dir]) do
         sh "curl https://raw.githubusercontent.com/aliaslab-1984/fastlane-utils/master/make_static.sh | bash -s"
     end
   end
 
-  desc "Deploy a static library"
-  private_lane :deploy_static_library do |options|
+  desc "Build a device-only static library"
+  private_lane :build_device_static_library do |options|
     Dir.chdir("../" + options[:prj_dir]) do
-        sh "curl https://raw.githubusercontent.com/aliaslab-1984/fastlane-utils/master/artifactory_publish_slib.sh | bash -s"
+        sh "curl https://raw.githubusercontent.com/aliaslab-1984/fastlane-utils/master/make_static.sh | bash -s -- -d"
     end
   end
+
+  desc "Build a simulator static library"
+  private_lane :build_simul_static_library do |options|
+    Dir.chdir("../" + options[:prj_dir]) do
+        sh "curl https://raw.githubusercontent.com/aliaslab-1984/fastlane-utils/master/make_static.sh | bash -s -- -s"
+    end
+  end
+
+# -- Deploy static 
+
+  desc "Deploy a universal static library"
+  private_lane :deploy_static_library do |options|
+    Dir.chdir("../" + options[:prj_dir]) do
+        sh "curl https://raw.githubusercontent.com/aliaslab-1984/fastlane-utils/master/artifactory_publish_slib.sh | bash -s -- -u"
+    end
+  end
+
+  desc "Deploy a device-only static library"
+  private_lane :deploy_device_static_library do |options|
+    Dir.chdir("../" + options[:prj_dir]) do
+        sh "curl https://raw.githubusercontent.com/aliaslab-1984/fastlane-utils/master/artifactory_publish_slib.sh | bash -s -- -d"
+    end
+  end
+
+  desc "Deploy a simulator static library"
+  private_lane :deploy_simul_static_library do |options|
+    Dir.chdir("../" + options[:prj_dir]) do
+        sh "curl https://raw.githubusercontent.com/aliaslab-1984/fastlane-utils/master/artifactory_publish_slib.sh | bash -s -- -s"
+    end
+  end
+
+# --
 
   # Called even from local fastlanes
   private_lane :remove_archive_file do
