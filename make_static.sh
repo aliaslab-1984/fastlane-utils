@@ -18,6 +18,23 @@ partialInfo() {
 	echo
 }
 
+bitInfo() {
+	echo "Static library: ${STATIC_LIB}"
+	ARCHITECTURES=$(lipo -archs "${STATIC_LIB}")
+	echo -e "Architectures:\t  $ARCHITECTURES"
+	echo
+	
+	for ARCH in $ARCHITECTURES
+	do
+		otool -l -arch $ARCH "${STATIC_LIB}" | grep __LLVM > /dev/null
+		if [ $? -eq 0 ]; then
+			echo -e "\t[*] $ARCH has BITCODE"
+		else
+			echo -e "\t[X] $ARCH has not BITCODE"
+		fi
+	done
+	echo "------------------------------------------------"
+}
 
 if [ "$1" = "-h" ]; then
 	usage
@@ -32,27 +49,34 @@ BUILD_ROOT=$(xcodebuild -project $PROJECT -target "$TARGET" -showBuildSettings |
 PROJECT_NAME=$(xcodebuild -project $PROJECT -target "$TARGET" -showBuildSettings | grep -w PROJECT_NAME | awk '{print $3}')
 echo "Building $PROJECT_NAME..."
 
-# define output folder environment variable
-UNIVERSAL_OUTPUTFOLDER=${BUILD_DIR}/${CONFIGURATION}-universal
-
 # Step 1. Build Device and Simulator versions
 # OTHER_CFLAGS="-fembed-bitcode" force BITCODE even in debug
 
-if [ "$1" != "-s" ]; then
+if [ "$1" = "-d" ] || [ "$1" = "-u" ]; then
 	xcodebuild clean build OTHER_CFLAGS="-fembed-bitcode" -target ALChiper ONLY_ACTIVE_ARCH=YES -configuration ${CONFIGURATION} -sdk iphoneos BUILD_DIR="${BUILD_DIR}" BUILD_ROOT="${BUILD_ROOT}"
 fi
-if [ "$1" != "-d" ]; then
+if [ "$1" = "-s" ]; then
+	xcodebuild clean build OTHER_CFLAGS="-fembed-bitcode" -target ALChiper ONLY_ACTIVE_ARCH=NO -configuration ${CONFIGURATION} -sdk iphonesimulator BUILD_DIR="${BUILD_DIR}" BUILD_ROOT="${BUILD_ROOT}"
+fi
+if [ "$1" = "-u" ]; then
 	xcodebuild clean build OTHER_CFLAGS="-fembed-bitcode" -target ALChiper ONLY_ACTIVE_ARCH=NO -arch i386 -arch x86_64 -configuration ${CONFIGURATION} -sdk iphonesimulator BUILD_DIR="${BUILD_DIR}" BUILD_ROOT="${BUILD_ROOT}"
 fi
 
 if [ "$1" = "-d" ]; then
 	partialInfo "iphoneos"
+	STATIC_LIB="${BUILD_DIR}/${CONFIGURATION}-iphoneos/lib${PROJECT_NAME}.a"
+	bitInfo
 	exit
 fi
 if [ "$1" = "-s" ]; then
 	partialInfo "iphonesimulator"
+	STATIC_LIB="${BUILD_DIR}/${CONFIGURATION}-iphonesimulator/lib${PROJECT_NAME}.a"
+	bitInfo
 	exit
 fi
+
+# define output folder environment variable
+UNIVERSAL_OUTPUTFOLDER=${BUILD_DIR}/${CONFIGURATION}-universal
 
 # make sure the output directory exists
 mkdir -p "${UNIVERSAL_OUTPUTFOLDER}"
@@ -71,24 +95,7 @@ mkdir build
 cp -R "${UNIVERSAL_OUTPUTFOLDER}" build/
 
 echo "------------------------------------------------"
-STATIC_LIB="build/${CONFIGURATION}-universal/lib${PROJECT_NAME}.a"
-#lipo -info "${STATIC_LIB}"
-#otool -l "${STATIC_LIB}" | grep __LLVM > /dev/null
-
-echo "Static library: ${STATIC_LIB}"
-ARCHITECTURES=$(lipo -archs "${STATIC_LIB}")
-echo -e "Architectures:\t  $ARCHITECTURES"
-echo
-
-for ARCH in $ARCHITECTURES
-do
-	otool -l -arch $ARCH "${STATIC_LIB}" | grep __LLVM > /dev/null
-	if [ $? -eq 0 ]; then
-		echo -e "\t[*] $ARCH has BITCODE"
-	else
-		echo -e "\t[X] $ARCH has not BITCODE"
-	fi
-done
-echo "------------------------------------------------"
+STATIC_LIB="${UNIVERSAL_OUTPUTFOLDER}/lib${PROJECT_NAME}.a"
+bitInfo
 
 open "${UNIVERSAL_OUTPUTFOLDER}/"
