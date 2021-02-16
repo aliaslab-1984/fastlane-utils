@@ -225,7 +225,7 @@ platform :ios do
   end
   
   desc "Launches Sonar Scanner"
-  lane: sonarAnalysis do
+  lane :sonarAnalysis do
     sh "sonar-scanner"
   end
 
