@@ -227,6 +227,7 @@ platform :ios do
   desc "Launches Sonar Scanner"
   lane: sonarAnalysis do
     sh "sonar-scanner"
+  end
 
   desc "Builds and check universal framework"
   lane :build_check_universal_framework do
