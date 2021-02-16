@@ -226,8 +226,8 @@ platform :ios do
   
   desc "Launches Sonar Scanner"
   lane :sonarAnalysis do |options|
-    UI.message options[:sdk_directory]
-    sh "cd #{options[:sdk_directory]}"
+    sh "echo #{options[:prj_dir]}"
+    sh "cd #{options[:prj_dir]}"
     sh "sonar-scanner"
   end
 
