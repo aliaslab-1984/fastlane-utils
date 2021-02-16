@@ -224,18 +224,12 @@ platform :ios do
     end
   end
   
-  desc "Launches Sonar Scanner for ObjC projects"
-  lane :sonarAnalysisOBJC do |options|
-    UI.message(options[:project_directory])
-    Dir.chdir("../" + options[:project_directory])
-    sh "build-wrapper-macosx-x86 --out-dir bw_output xcodebuild clean build"
-    sh "sonar-scanner"
-  end
-  
   desc "Launches Sonar Scanner for Swift projects"
   lane :sonarAnalysis do |options|
-    Dir.chdir("../" + options[:project_directory])
-    sh "sonar-scanner"
+    Dir.chdir("../")
+    derived_data_path = options[:derived_data_path]
+    sh "curl https://github.com/aliaslab-1984/fastlane-utils/blob/master/xccov-to-sonarqube-generic.sh | bash -s Build/Logs/Test/*.xcresult/ > sonarqube-generic-coverage.xml"
+    sh "sonar-scanner -Dsonar.coverageReportPaths=sonarqube-generic-coverage.xml -Dsonar.cfamily.build-wrapper-output.bypass=true"
   end
 
   desc "Builds and check universal framework"
