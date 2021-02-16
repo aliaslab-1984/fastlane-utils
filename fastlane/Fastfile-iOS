@@ -226,8 +226,8 @@ platform :ios do
   
   desc "Launches Sonar Scanner"
   lane :sonarAnalysis do |options|
-    UI.message(options[:prj_dir])
-    Dir.chdir("SmartOTPSDK")
+    UI.message(get_main_workspace + " SmartOTPSDK")
+    Dir.chdir("../" + "SmartOTPSDK")
     sh "sonar-scanner"
   end
 
