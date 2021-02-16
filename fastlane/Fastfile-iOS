@@ -224,7 +224,15 @@ platform :ios do
     end
   end
   
-  desc "Launches Sonar Scanner"
+  desc "Launches Sonar Scanner for ObjC projects"
+  lane :sonarAnalysisOBJC do |options|
+    UI.message(get_main_workspace + " SmartOTPSDK")
+    Dir.chdir("../" + "SmartOTPSDK")
+    sh "build-wrapper-macosx-x86 --out-dir bw_output xcodebuild clean build"
+    sh "sonar-scanner"
+  end
+  
+  desc "Launches Sonar Scanner for Swift projects"
   lane :sonarAnalysis do |options|
     UI.message(get_main_workspace + " SmartOTPSDK")
     Dir.chdir("../" + "SmartOTPSDK")
