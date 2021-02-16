@@ -223,6 +223,10 @@ platform :ios do
       deploy_framework(config_path: config_path, framework_path: xcframework_path, xc: true)
     end
   end
+  
+  desc "Launches Sonar Scanner"
+  lane: sonarAnalysis do
+    sh "sonar-scanner"
 
   desc "Builds and check universal framework"
   lane :build_check_universal_framework do
