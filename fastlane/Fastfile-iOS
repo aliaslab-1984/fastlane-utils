@@ -228,7 +228,7 @@ platform :ios do
   lane :sonarAnalysis do |options|
     Dir.chdir("../")
     derived_data_path = options[:derived_data_path]
-    sh "curl https://raw.githubusercontent.com/aliaslab-1984/fastlane-utils/master/xccov-to-sonarqube-generic.sh | bash -s -- \"#{derived_data_path}\"/Logs/Test/*.xcresult/ > sonarqube-generic-coverage.xml"
+    sh "curl https://raw.githubusercontent.com/aliaslab-1984/fastlane-utils/master/xccov-to-sonarqube-generic.sh | bash -s -- SmartOTPSDK/Build/Logs/Test/*.xcresult/ > sonarqube-generic-coverage.xml"
     sh "sonar-scanner -Dsonar.coverageReportPaths=sonarqube-generic-coverage.xml -Dsonar.cfamily.build-wrapper-output.bypass=true"
   end
 
