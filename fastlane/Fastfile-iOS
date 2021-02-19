@@ -226,10 +226,11 @@ platform :ios do
   
   desc "Launches Sonar Scanner for Swift projects"
   private_lane :sonarAnalysis do |options|
-    Dir.chdir("../")
-    derived_data_path = options[:project_directory] + "/Build/"
-    sh "curl https://raw.githubusercontent.com/aliaslab-1984/fastlane-utils/master/xccov-to-sonarqube-generic.sh | bash -s -- #{derived_data_path}/Logs/Test/*.xcresult/ > sonarqube-generic-coverage.xml"
-    sh "sonar-scanner -Dsonar.coverageReportPaths=sonarqube-generic-coverage.xml"
+    Dir.chdir("../") do
+      derived_data_path = options[:project_directory] + "/Build/"
+      sh "curl https://raw.githubusercontent.com/aliaslab-1984/fastlane-utils/master/xccov-to-sonarqube-generic.sh | bash -s -- #{derived_data_path}/Logs/Test/*.xcresult/ > sonarqube-generic-coverage.xml"
+      sh "sonar-scanner -Dsonar.coverageReportPaths=sonarqube-generic-coverage.xml"
+    end
   end
 
   desc "Builds and check universal framework"
