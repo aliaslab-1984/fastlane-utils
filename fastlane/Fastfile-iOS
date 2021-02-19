@@ -229,7 +229,7 @@ platform :ios do
     Dir.chdir("../")
     derived_data_path = options[:project_directory] + "/Build/"
     sh "curl https://raw.githubusercontent.com/aliaslab-1984/fastlane-utils/master/xccov-to-sonarqube-generic.sh | bash -s -- #{derived_data_path}/Logs/Test/*.xcresult/ > sonarqube-generic-coverage.xml"
-    sh "sonar-scanner -Dsonar.coverageReportPaths=sonarqube-generic-coverage.xml -Dsonar.cfamily.build-wrapper-output.bypass=true"
+    sh "sonar-scanner -Dsonar.coverageReportPaths=sonarqube-generic-coverage.xml"
   end
 
   desc "Builds and check universal framework"
