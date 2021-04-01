@@ -228,8 +228,19 @@ platform :ios do
   private_lane :sonarAnalysis do |options|
     Dir.chdir("..") do
       derived_data_path = options[:project_directory] + "/Build/"
-      sh "curl https://raw.githubusercontent.com/aliaslab-1984/fastlane-utils/master/xccov-to-sonarqube-generic.sh | bash -s -- #{derived_data_path}Logs/Test/*.xcresult/ > sonarqube-generic-coverage.xml"
-      sh "sonar-scanner -Dsonar.coverageReportPaths=sonarqube-generic-coverage.xml"
+      buildFolder = derived_data_path + "/Build/Products/*/"
+      
+      config_path = get_artifactory_config(config_name: options[:config_name])
+      frameworkName = sh("cat \"#{config_path}\" | grep frameworkName | cut -d= -f2").chomp
+      binaryName = "#{frameworkName}.framework/#{frameworkName}"
+      
+      profiled_data_path = derived_data_path + "/Build/ProfileData/*/*-profdata"
+      
+      binary_path = buildFolder + binaryName
+      
+      sh "xcrun --run llvm-cov show #{binary_path} --instr-profile #{profiled_data_path} >> generic.xml"
+      #sh "curl https://raw.githubusercontent.com/aliaslab-1984/fastlane-utils/master/xccov-to-sonarqube-generic.sh | bash -s -- #{derived_data_path}Logs/Test/*.xcresult/ > sonarqube-generic-coverage.xml"
+      sh "sonar-scanner"
     end
   end
 
