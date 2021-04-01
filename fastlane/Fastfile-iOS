@@ -244,7 +244,7 @@ platform :ios do
       UI.success profiled_data_path
       UI.success binary_path
       
-      sh "xcrun --run llvm-cov show \"#{binary_path}\" --instr-profile \"#{profiled_data_path}\" > generic.xml"
+      sh "xcrun --run llvm-cov show '#{binary_path}' --instr-profile '#{profiled_data_path}' > generic.xml"
       #sh "curl https://raw.githubusercontent.com/aliaslab-1984/fastlane-utils/master/xccov-to-sonarqube-generic.sh | bash -s -- #{derived_data_path}Logs/Test/*.xcresult/ > sonarqube-generic-coverage.xml"
       sh "sonar-scanner"
     
