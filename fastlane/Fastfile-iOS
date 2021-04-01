@@ -231,21 +231,21 @@ platform :ios do
     frameworkName = sh("cat \"#{config_path}\" | grep frameworkName | cut -d= -f2").chomp
     binaryName = "#{frameworkName}.framework/#{frameworkName}"
     UI.success binaryName
-    Dir.chdir("..") do
-      derived_data_path = options[:project_directory] + "/Build/"
-      buildFolder = derived_data_path + "Build/Products/Debug-iphonesimulator/"
+    
+    derived_data_path = options[:project_directory] + "/Build/"
+    buildFolder = derived_data_path + "Build/Products/Debug-iphonesimulator/"
       
-      profiled_data_path = derived_data_path + "Build/ProfileData/*/*.profdata"
+    profiled_data_path = derived_data_path + "Build/ProfileData/*/*.profdata"
       
-      binary_path = buildFolder + binaryName
+    binary_path = buildFolder + binaryName
       
-      UI.success profiled_data_path
-      UI.success binary_path
+    UI.success profiled_data_path
+    UI.success binary_path
       
-      sh "xcrun --run llvm-cov show #{binary_path} --instr-profile #{profiled_data_path} >> generic.xml"
-      #sh "curl https://raw.githubusercontent.com/aliaslab-1984/fastlane-utils/master/xccov-to-sonarqube-generic.sh | bash -s -- #{derived_data_path}Logs/Test/*.xcresult/ > sonarqube-generic-coverage.xml"
-      sh "sonar-scanner"
-    end
+    sh "xcrun --run llvm-cov show #{binary_path} --instr-profile #{profiled_data_path} >> generic.xml"
+    #sh "curl https://raw.githubusercontent.com/aliaslab-1984/fastlane-utils/master/xccov-to-sonarqube-generic.sh | bash -s -- #{derived_data_path}Logs/Test/*.xcresult/ > sonarqube-generic-coverage.xml"
+    sh "sonar-scanner"
+   
   end
 
   desc "Builds and check universal framework"
