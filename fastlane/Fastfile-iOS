@@ -226,13 +226,13 @@ platform :ios do
   
   desc "Launches Sonar Scanner for Swift projects"
   private_lane :sonarAnalysis do |options|
+    config_path = get_artifactory_config(config_name: options[:config_name])
+    frameworkName = sh("cat \"#{config_path}\" | grep frameworkName | cut -d= -f2").chomp
+    binaryName = "#{frameworkName}.framework/#{frameworkName}"
+  
     Dir.chdir("..") do
       derived_data_path = options[:project_directory] + "/Build/"
       buildFolder = derived_data_path + "/Build/Products/*/"
-      
-      config_path = get_artifactory_config(config_name: options[:config_name])
-      frameworkName = sh("cat \"#{config_path}\" | grep frameworkName | cut -d= -f2").chomp
-      binaryName = "#{frameworkName}.framework/#{frameworkName}"
       
       profiled_data_path = derived_data_path + "/Build/ProfileData/*/*-profdata"
       
