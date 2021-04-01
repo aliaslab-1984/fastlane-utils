@@ -233,7 +233,7 @@ platform :ios do
     UI.success binaryName
     Dir.chdir("..") do
       derived_data_path = options[:project_directory] + "/Build/"
-      buildFolder = derived_data_path + "Build/Products/*/"
+      buildFolder = derived_data_path + "Build/Products/Debug-iphonesimulator/"
       
       profiled_data_path = derived_data_path + "Build/ProfileData/*/*.profdata"
       
