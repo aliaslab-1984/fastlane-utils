@@ -237,7 +237,7 @@ platform :ios do
       
       UI.success sh("pwd")
       
-      profiled_data_path = derived_data_path + "Build/ProfileData/*/*.profdata"
+      profiled_data_path = derived_data_path + "Build/ProfileData/*/Coverage.profdata"
       
       binary_path = buildFolder + binaryName
       
