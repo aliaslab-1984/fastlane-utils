@@ -241,7 +241,7 @@ platform :ios do
       
       binary_path = buildFolder + binaryName
       
-      UI.success profiled_data_path
+      #UI.success profiled_data_path
       UI.success binary_path
       
       sh "xcrun --run llvm-cov show \"#{binary_path}\" --instr-profile \"#{derived_data_path}Build/ProfileData/*/Coverage.profdata\" > generic.xml"
