@@ -31,9 +31,10 @@ platform :ios do
         sh "rm -rf \"Carthage/Checkouts/Cuckoo\""
         sh "carthage checkout Cuckoo"
       end
-      sh "rome download --platform iOS"
-      sh "rome list --missing --platform iOS | awk '{print $1}' | xargs carthage bootstrap --platform iOS --cache-builds"
-      sh "rome list --missing --platform iOS | awk '{print $1}' | xargs rome upload --platform iOS"
+      #sh "rome download --platform iOS"
+      #sh "rome list --missing --platform iOS | awk '{print $1}' | xargs carthage bootstrap --platform iOS --cache-builds"
+      #sh "rome list --missing --platform iOS | awk '{print $1}' | xargs rome upload --platform iOS"
+      sh "carthage.sh bootstrap --platform iOS --cache-builds"
     end
   end
 
