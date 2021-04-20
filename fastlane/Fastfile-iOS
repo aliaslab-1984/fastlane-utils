@@ -38,6 +38,17 @@ platform :ios do
     end
   end
 
+  desc "XCFrameworks managed by Carthage"
+  private_lane :bootstrap_xc do |options|
+    Dir.chdir(options[:project_directory]) do
+      if !File.file?("Cartfile.resolved")
+        UI.user_error!("Cartfile.resolved not found: please run \"carthage update --platform iOS --use-xcframeworks --no-build\" and retry.")
+        next
+      end
+      sh "carthage bootstrap --platform iOS --use-xcframeworks --cache-builds"
+    end
+  end
+
   desc "Runs SwiftLint"
   private_lane :lint do |options|
     swiftlint(
