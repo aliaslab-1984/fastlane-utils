@@ -56,7 +56,7 @@ platform :ios do
       path: options[:project_directory],
       output_file: options[:project_directory] + "/swiftlint-results.xml",
       reporter: "checkstyle",
-      config_file: ".swiftlint.yml"
+      config_file: options[:project_directory] + "/.swiftlint.yml"
     )
   end
 
