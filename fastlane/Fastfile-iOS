@@ -83,7 +83,7 @@ platform :ios do
       sh "xchtmlreport -r #{"\"" + derived_data_path + "\"/Logs/Test/*.xcresult/"}"
     end
 
-    extract_coverage(options)
+    # extract_coverage(options)
 
     if failedScan
        UI.error "Scan failed"
@@ -107,7 +107,7 @@ platform :ios do
     end
 
     options[:derived_data_path] = derived_data_path
-    extract_coverage(options)
+    # extract_coverage(options)
   end
 
   desc "Builds and archives the specified scheme"
