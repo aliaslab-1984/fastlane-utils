@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
 echo
-echo "Archivia su Artifactory il risultato una build statica di ALCipher"
-echo "Chiamare dalla cartella contenente ALChiper.xcodeproj"
+echo "Archivia su Artifactory il risultato una build statica"
+echo "Chiamare dalla cartella contenente .xcodeproj"
 echo -e "\n$0 -h for more info"
 echo
 
@@ -89,8 +89,9 @@ ARTIFACTORY_USER=$(require_gradle_property "artifactoryUser") || exit $?
 ARTIFACTORY_PASSWORD=$(require_gradle_property "artifactoryPassword") || exit $?
 echo "Artifactory credentials retrieved successfully"
 
-TARGET="ALCipher-Universal"
-PROJECT="ALChiper.xcodeproj"
+PROJECT=`ls -d *.xcodeproj`
+TARGET=`basename $PROJECT .xcodeproj`
+
 BUILD_DIR=$(xcodebuild -project $PROJECT -target $TARGET -showBuildSettings | grep -w BUILD_DIR | awk '{print $3}')
 if [ -z $BUILD_DIR ]; then
 	exit
@@ -99,17 +100,17 @@ fi
 if [ "$1" = "-u" ]; then
 	TYPE="universal"
 	VARIANT="Release-$TYPE"
-	PRODUCT="libALChiper.a.zip"
+	PRODUCT="lib$TARGET.a.zip"
 fi
 if [ "$1" = "-s" ]; then
 	TYPE="iphonesimulator"
 	VARIANT="Release-$TYPE"
-	PRODUCT="libALChiper.a.simul.zip"
+	PRODUCT="lib$TARGET.a.simul.zip"
 fi
 if [ "$1" = "-d" ]; then
 	TYPE="iphoneos"
 	VARIANT="Release-$TYPE"
-	PRODUCT="libALChiper.a.device.zip"
+	PRODUCT="lib$TARGET.a.device.zip"
 fi
 
 echo -e "\n>> Preparing $PRODUCT in \n${BUILD_DIR}/${VARIANT}\n"
@@ -124,7 +125,11 @@ ARTIFACT_URL="https://artifactory-new.aliaslab.net/artifactory/SecureCallOTP_lib
 ARTIFACT_MD5_CHECKSUM=$(md5 -q "$PRODUCT")
 ARTIFACT_SHA1_CHECKSUM=$(shasum -a 1 "$PRODUCT" | awk '{ print $1 }')
 
-JSON_URL=$ARTIFACT_URL/libALCipher.json
+if [ "$TARGET" = "ALChiper" ]; then
+	JSON_URL=$ARTIFACT_URL/libALCipher.json
+else
+	JSON_URL=$ARTIFACT_URL/lib$TARGET.json
+fi
 
 echo "Downloading JSON from Artifactory"
 ORIGINAL_INDEX_JSON=$(get_current_index_json "$ARTIFACTORY_USER" "$ARTIFACTORY_PASSWORD" "$JSON_URL") || exit $?

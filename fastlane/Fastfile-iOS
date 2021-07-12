@@ -146,7 +146,7 @@ platform :ios do
   desc "Build a universal static library"
   private_lane :build_static_library do |options|
     Dir.chdir("../" + options[:prj_dir]) do
-        sh "curl https://raw.githubusercontent.com/aliaslab-1984/fastlane-utils/master/make_static.sh | bash -s"
+        sh "curl https://raw.githubusercontent.com/aliaslab-1984/fastlane-utils/master/make_static.sh | bash -s -- -u"
     end
   end
 
