@@ -140,16 +140,17 @@ if [ -z $2 ]; then
 else
 	VER=$2
 fi
+echo "Updated version: $VER"
 
 UPDATED_JSON=$(echo $ORIGINAL_INDEX_JSON | jq --arg "artifactURL" "$ARTIFACT_URL/$VER/$PRODUCT" '. + {"'$VER'": $artifactURL}') || exit $?
 echo "Updated JSON is $UPDATED_JSON"
 
 echo
 echo "Uploading framework to Artifactory"
-curl -u$ARTIFACTORY_USER:$ARTIFACTORY_PASSWORD -T $PRODUCT --header "X-Checksum-MD5:${ARTIFACT_MD5_CHECKSUM}" --header "X-Checksum-Sha1:${ARTIFACT_SHA1_CHECKSUM}" "$ARTIFACT_URL/$VER/$PRODUCT"
+curl -u$ARTIFACTORY_USER:$ARTIFACTORY_PASSWORD --http1.1 -T $PRODUCT --header "X-Checksum-MD5:${ARTIFACT_MD5_CHECKSUM}" --header "X-Checksum-Sha1:${ARTIFACT_SHA1_CHECKSUM}" "$ARTIFACT_URL/$VER/$PRODUCT"
 
 echo "Uploading JSON to Artifactory"
 JSON_MD5_CHECKSUM=$(echo $UPDATED_JSON | md5 -q)
 JSON_SHA1_CHECKSUM=$(echo $UPDATED_JSON | shasum -a 1 | awk '{ print $1 }')
-echo $UPDATED_JSON | curl -u$ARTIFACTORY_USER:$ARTIFACTORY_PASSWORD -T - --header "X-Checksum-MD5:${JSON_MD5_CHECKSUM}" --header "X-Checksum-Sha1:${JSON_SHA1_CHECKSUM}" "$JSON_URL"
+echo $UPDATED_JSON | curl -u$ARTIFACTORY_USER:$ARTIFACTORY_PASSWORD --http1.1 -T - --header "X-Checksum-MD5:${JSON_MD5_CHECKSUM}" --header "X-Checksum-Sha1:${JSON_SHA1_CHECKSUM}" "$JSON_URL"
 
