@@ -92,6 +92,14 @@ echo "Artifactory credentials retrieved successfully"
 PROJECT=`ls -d *.xcodeproj`
 TARGET=`basename $PROJECT .xcodeproj`
 
+if [ "$TARGET" = "ALChiper" ]; then
+	CORE_PRODUCT_NAME="libCipher"
+	JSON_FILE="libALCipher.json"
+else
+	CORE_PRODUCT_NAME=$TARGET
+	JSON_FILE="lib$TARGET.json"
+fi
+
 BUILD_DIR=$(xcodebuild -project $PROJECT -target $TARGET -showBuildSettings | grep -w BUILD_DIR | awk '{print $3}')
 if [ -z $BUILD_DIR ]; then
 	exit
@@ -113,7 +121,13 @@ if [ "$1" = "-d" ]; then
 	PRODUCT="lib$TARGET.a.device.zip"
 fi
 
+echo "== ========================================================== =="
+echo "PROJECT: $PROJECT"
+echo "TARGET: $TARGET"
+echo "PRODUCT: $PRODUCT"
+echo "CORE_PRODUCT_NAME: $CORE_PRODUCT_NAME"
 echo -e "\n>> Preparing $PRODUCT in \n${BUILD_DIR}/${VARIANT}\n"
+echo "== ========================================================== =="
 
 cd "${BUILD_DIR}/${VARIANT}"
 if [ -f $PRODUCT ]; then
@@ -121,15 +135,10 @@ if [ -f $PRODUCT ]; then
 fi
 zip -r $PRODUCT *
 
-ARTIFACT_URL="https://artifactory-new.aliaslab.net/artifactory/SecureCallOTP_libCipher_iOS_Release/$TYPE"
+ARTIFACT_URL="https://artifactory-new.aliaslab.net/artifactory/SecureCallOTP_${CORE_PRODUCT_NAME}_iOS_Release/$TYPE"
 ARTIFACT_MD5_CHECKSUM=$(md5 -q "$PRODUCT")
 ARTIFACT_SHA1_CHECKSUM=$(shasum -a 1 "$PRODUCT" | awk '{ print $1 }')
-
-if [ "$TARGET" = "ALChiper" ]; then
-	JSON_URL=$ARTIFACT_URL/libALCipher.json
-else
-	JSON_URL=$ARTIFACT_URL/lib$TARGET.json
-fi
+JSON_URL=$ARTIFACT_URL/$JSON_FILE
 
 echo "Downloading JSON from Artifactory"
 ORIGINAL_INDEX_JSON=$(get_current_index_json "$ARTIFACTORY_USER" "$ARTIFACTORY_PASSWORD" "$JSON_URL") || exit $?
