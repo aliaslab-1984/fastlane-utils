@@ -165,12 +165,12 @@ echo "================================================================="
 echo "Uploading framework to Artifactory"
 ARTIFACT_MD5_CHECKSUM=$(md5 -q "$ZIPPED_FRAMEWORK_FILE")
 ARTIFACT_SHA1_CHECKSUM=$(shasum -a 1 "$ZIPPED_FRAMEWORK_FILE" | awk '{ print $1 }')
-CURL_OUTPUT=$(curl -u$ARTIFACTORY_USER:$ARTIFACTORY_PASSWORD -T "${ZIPPED_FRAMEWORK_FILE}" --header "X-Checksum-MD5:${ARTIFACT_MD5_CHECKSUM}" --header "X-Checksum-Sha1:${ARTIFACT_SHA1_CHECKSUM}" --header "X-Artifactory-Last-Modified" "$ARTIFACT_URL")
+CURL_OUTPUT=$(curl -u$ARTIFACTORY_USER:$ARTIFACTORY_PASSWORD --http1.1 -T "${ZIPPED_FRAMEWORK_FILE}" --header "X-Checksum-MD5:${ARTIFACT_MD5_CHECKSUM}" --header "X-Checksum-Sha1:${ARTIFACT_SHA1_CHECKSUM}" --header "X-Artifactory-Last-Modified" "$ARTIFACT_URL")
 rm -f "$ZIPPED_FRAMEWORK_FILE"
 check_artifactory_response "$CURL_OUTPUT" || exit $?
 
 echo "Uploading JSON to Artifactory"
 JSON_MD5_CHECKSUM=$(echo $UPDATED_JSON | md5 -q)
 JSON_SHA1_CHECKSUM=$(echo $UPDATED_JSON | shasum -a 1 | awk '{ print $1 }')
-CURL_OUTPUT=$(echo $UPDATED_JSON | curl -u$ARTIFACTORY_USER:$ARTIFACTORY_PASSWORD -T - --header "X-Checksum-MD5:${JSON_MD5_CHECKSUM}" --header "X-Checksum-Sha1:${JSON_SHA1_CHECKSUM}" "$JSON_URL")
+CURL_OUTPUT=$(echo $UPDATED_JSON | curl -u$ARTIFACTORY_USER:$ARTIFACTORY_PASSWORD --http1.1 -T - --header "X-Checksum-MD5:${JSON_MD5_CHECKSUM}" --header "X-Checksum-Sha1:${JSON_SHA1_CHECKSUM}" "$JSON_URL")
 check_artifactory_response "$CURL_OUTPUT" || exit $?
