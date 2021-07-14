@@ -99,4 +99,4 @@ echo "------------------------------------------------"
 STATIC_LIB="${UNIVERSAL_OUTPUTFOLDER}/lib${PROJECT_NAME}.a"
 bitInfo
 
-open "${UNIVERSAL_OUTPUTFOLDER}/"
+#open "${UNIVERSAL_OUTPUTFOLDER}/" 2> /dev/null
