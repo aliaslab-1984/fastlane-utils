@@ -267,6 +267,14 @@ platform :ios do
     end
    
   end
+  
+  desc "Launches Sonar Scanner for Swift projects, without code coverage"
+  private_lane :sonarLightAnalysis do |options|
+    Dir.chdir("..") do
+      sh "sonar-scanner"
+    end
+   
+  end
 
   desc "Builds and check universal framework"
   lane :build_check_universal_framework do
