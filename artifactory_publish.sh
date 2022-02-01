@@ -46,10 +46,11 @@ get_version_string() {
 }
 
 get_repository_name() {
-  case $2 in
-    *"SNAPSHOT"*) echo $(require_property "$1" "snapshotRepository") || exit $?;;
-    *) echo $(require_property "$1" "releaseRepository") || exit $?;;
-  esac
+  if [[ "$2" == *"Debug"* ]]; then
+    echo $(require_property "$1" "snapshotRepository") || exit $?
+  else
+    echo $(require_property "$1" "releaseRepository") || exit $?
+  fi
 }
 
 get_current_index_json() {
@@ -145,7 +146,7 @@ echo "Zipped file is $ZIPPED_FRAMEWORK_FILE"
 echo "Target is of type $TARGET_TYPE"
 echo "Version string is $VERSION_STRING"
 
-REPOSITORY_NAME=$(get_repository_name "$CONFIG_FILE_PATH" $VERSION_STRING) || exit $?
+REPOSITORY_NAME=$(get_repository_name "$CONFIG_FILE_PATH" "$FRAMEWORK_PATH") || exit $?
 #REPOSITORY_NAME="IDSignMobileStandaloneSDK_iOS_Snapshot"
 echo "Repository name is $REPOSITORY_NAME"
 
