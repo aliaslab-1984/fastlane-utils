@@ -214,9 +214,9 @@ func getLineHits(id: Int, lines: [String]) -> Int? {
                 middle.removeLast()     // ","
                 var column = components[0]
                 column.removeLast()     // ","
-                if Int(middle) != 0 && Int(column) != 1 {
+                //if Int(middle) != 0 && Int(column) != 1 {
                     subHits = Int(components.last ?? "") ?? 0
-                }
+                //}
             }
             if subHits == 0 {
                 return 0
