@@ -60,7 +60,7 @@ get_current_index_json() {
   case $RETURN_CODE in
     "200") DOWNLOADED_JSON="${CURL_OUTPUT%$SEPARATOR*}"; echo $DOWNLOADED_JSON;;
     "404") echo "{}";;
-    *) exit 1
+    *) echo "Error downloading index JSON"; exit 1
   esac
 }
 
@@ -76,9 +76,12 @@ zip_framework() {
 
 check_artifactory_response() {
   echo "Response is: $1"
+  #if [ -z "$1" ]; then
+  #  echo "No response from the repository"
+  #  exit 1
+  #fi
   if [ -z "$1" ]; then
-    echo "No response from Artifactory"
-    exit 1
+    return
   fi
   ERROR_COUNT=$(echo $1 | jq '.errors? | length')
   if [ "$ERROR_COUNT" -gt "0" ]; then
@@ -121,10 +124,9 @@ if [ -z "$FRAMEWORK_PATH" ]; then
   exit 1
 fi
 
-#ARTIFACTORY_URL=$(require_property "$CONFIG_FILE_PATH" "artifactoryURL") || exit $?
-ARTIFACTORY_URL=$(require_gradle_property "artifactoryURL") || exit $?
-ARTIFACTORY_USER=$(require_gradle_property "artifactoryUser") || exit $?
-ARTIFACTORY_PASSWORD=$(require_gradle_property "artifactoryPassword") || exit $?
+ARTIFACTORY_URL=$(require_gradle_property "nexusURL") || exit $?
+ARTIFACTORY_USER=$(require_gradle_property "nexusUser") || exit $?
+ARTIFACTORY_PASSWORD=$(require_gradle_property "nexusPassword") || exit $?
 
 echo "Artifactory credentials retrieved successfully"
 
@@ -150,7 +152,8 @@ REPOSITORY_NAME=$(get_repository_name "$CONFIG_FILE_PATH" "$FRAMEWORK_PATH") || 
 #REPOSITORY_NAME="IDSignMobileStandaloneSDK_iOS_Snapshot"
 echo "Repository name is $REPOSITORY_NAME"
 
-ARTIFACT_URL=$ARTIFACTORY_URL/$REPOSITORY_NAME/$TARGET_TYPE/$VERSION_STRING/${FRAMEWORK_NAME}.${XC_PREFIX}framework.zip
+ARTIFACT_PATH=$ARTIFACTORY_URL/$REPOSITORY_NAME/$TARGET_TYPE/$VERSION_STRING
+ARTIFACT_URL=$ARTIFACT_PATH/${FRAMEWORK_NAME}.${XC_PREFIX}framework.zip
 JSON_URL=$ARTIFACTORY_URL/$REPOSITORY_NAME/$TARGET_TYPE/$FRAMEWORK_NAME.json
 echo "Downloading $JSON_URL..."
 
@@ -164,14 +167,23 @@ echo "JSON URL is $JSON_URL"
 echo "================================================================="
 
 echo "Uploading framework to Artifactory"
-ARTIFACT_MD5_CHECKSUM=$(md5 -q "$ZIPPED_FRAMEWORK_FILE")
-ARTIFACT_SHA1_CHECKSUM=$(shasum -a 1 "$ZIPPED_FRAMEWORK_FILE" | awk '{ print $1 }')
-CURL_OUTPUT=$(curl -u$ARTIFACTORY_USER:$ARTIFACTORY_PASSWORD --http1.1 -T "${ZIPPED_FRAMEWORK_FILE}" --header "X-Checksum-MD5:${ARTIFACT_MD5_CHECKSUM}" --header "X-Checksum-Sha1:${ARTIFACT_SHA1_CHECKSUM}" --header "X-Artifactory-Last-Modified" "$ARTIFACT_URL")
-rm -f "$ZIPPED_FRAMEWORK_FILE"
+MD5="${FRAMEWORK_NAME}.${XC_PREFIX}framework.zip.md5"
+md5 -q "$ZIPPED_FRAMEWORK_FILE" > $MD5
+SHA1="${FRAMEWORK_NAME}.${XC_PREFIX}framework.zip.sha1"
+shasum -a 1 "$ZIPPED_FRAMEWORK_FILE" | awk '{ print $1 }' > $SHA1
+
+echo " * uploading: $ZIPPED_FRAMEWORK_FILE"
+echo " * to $ARTIFACT_URL"
+CURL_OUTPUT=$(curl -u$ARTIFACTORY_USER:$ARTIFACTORY_PASSWORD -T "${ZIPPED_FRAMEWORK_FILE}" "$ARTIFACT_URL")
 check_artifactory_response "$CURL_OUTPUT" || exit $?
 
+CURL_OUTPUT=$(curl -u$ARTIFACTORY_USER:$ARTIFACTORY_PASSWORD -T "${MD5}" "$ARTIFACT_PATH/$MD5")
+CURL_OUTPUT=$(curl -u$ARTIFACTORY_USER:$ARTIFACTORY_PASSWORD -T "${SHA1}" "$ARTIFACT_PATH/$SHA1")
+
 echo "Uploading JSON to Artifactory"
-JSON_MD5_CHECKSUM=$(echo $UPDATED_JSON | md5 -q)
-JSON_SHA1_CHECKSUM=$(echo $UPDATED_JSON | shasum -a 1 | awk '{ print $1 }')
-CURL_OUTPUT=$(echo $UPDATED_JSON | curl -u$ARTIFACTORY_USER:$ARTIFACTORY_PASSWORD --http1.1 -T - --header "X-Checksum-MD5:${JSON_MD5_CHECKSUM}" --header "X-Checksum-Sha1:${JSON_SHA1_CHECKSUM}" "$JSON_URL")
-check_artifactory_response "$CURL_OUTPUT" || exit $?
+CURL_OUTPUT=$(echo $UPDATED_JSON | curl -u$ARTIFACTORY_USER:$ARTIFACTORY_PASSWORD -T - "$JSON_URL")
+# check_artifactory_response "$CURL_OUTPUT" || exit $?
+
+rm -f "${ZIPPED_FRAMEWORK_FILE}"
+rm -f "${MD5}"
+rm -f "${SHA1}"
