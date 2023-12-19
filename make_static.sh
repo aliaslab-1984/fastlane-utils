@@ -60,7 +60,7 @@ if [ "$1" = "-s" ]; then
 	xcodebuild clean build OTHER_CFLAGS="-fembed-bitcode" -target $TARGET ONLY_ACTIVE_ARCH=NO -configuration ${CONFIGURATION} -sdk iphonesimulator BUILD_DIR="${BUILD_DIR}" BUILD_ROOT="${BUILD_ROOT}"
 fi
 if [ "$1" = "-u" ]; then
-	xcodebuild clean build OTHER_CFLAGS="-fembed-bitcode" -target $TARGET ONLY_ACTIVE_ARCH=NO -arch i386 -arch x86_64 -configuration ${CONFIGURATION} -sdk iphonesimulator BUILD_DIR="${BUILD_DIR}" BUILD_ROOT="${BUILD_ROOT}"
+	xcodebuild clean build OTHER_CFLAGS="-fembed-bitcode" -target $TARGET ONLY_ACTIVE_ARCH=NO -arch x86_64 -configuration ${CONFIGURATION} -sdk iphonesimulator BUILD_DIR="${BUILD_DIR}" BUILD_ROOT="${BUILD_ROOT}"
 fi
 
 if [ "$1" = "-d" ]; then
