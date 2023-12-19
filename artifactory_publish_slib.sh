@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 echo
-echo "Archivia su Artifactory il risultato una build statica"
+echo "Archivia su Nexus il risultato una build statica"
 echo "Chiamare dalla cartella contenente .xcodeproj"
 echo -e "\n$0 -h for more info"
 echo
@@ -85,9 +85,12 @@ if [ "$1" = "-h" ]; then
 	exit
 fi
 
-ARTIFACTORY_USER=$(require_gradle_property "artifactoryUser") || exit $?
-ARTIFACTORY_PASSWORD=$(require_gradle_property "artifactoryPassword") || exit $?
+ARTIFACTORY_USER=$(require_gradle_property "nexusUser") || exit $?
+ARTIFACTORY_PASSWORD=$(require_gradle_property "nexusPassword") || exit $?
+ARTIFACTORY_URL=$(require_gradle_property "nexusURL") || exit $?
 echo "Artifactory credentials retrieved successfully"
+echo "Repository URL: $ARTIFACTORY_URL"
+echo
 
 PROJECT=`ls -d *.xcodeproj`
 TARGET=`basename $PROJECT .xcodeproj`
@@ -135,7 +138,7 @@ if [ -f $PRODUCT ]; then
 fi
 zip -r $PRODUCT *
 
-ARTIFACT_URL="https://artifactory-new.aliaslab.net/artifactory/SecureCallOTP_${CORE_PRODUCT_NAME}_iOS_Release/$TYPE"
+ARTIFACT_URL="$ARTIFACTORY_URL/${CORE_PRODUCT_NAME}_Release/$TYPE"
 ARTIFACT_MD5_CHECKSUM=$(md5 -q "$PRODUCT")
 ARTIFACT_SHA1_CHECKSUM=$(shasum -a 1 "$PRODUCT" | awk '{ print $1 }')
 JSON_URL=$ARTIFACT_URL/$JSON_FILE
@@ -156,10 +159,11 @@ echo "Updated JSON is $UPDATED_JSON"
 
 echo
 echo "Uploading framework to Artifactory"
-curl -u$ARTIFACTORY_USER:$ARTIFACTORY_PASSWORD --http1.1 -T $PRODUCT --header "X-Checksum-MD5:${ARTIFACT_MD5_CHECKSUM}" --header "X-Checksum-Sha1:${ARTIFACT_SHA1_CHECKSUM}" "$ARTIFACT_URL/$VER/$PRODUCT"
+echo "to $ARTIFACT_URL/$VER/$PRODUCT"
+curl -u$ARTIFACTORY_USER:$ARTIFACTORY_PASSWORD -T "${PRODUCT}" "$ARTIFACT_URL/$VER/$PRODUCT"
+
 
 echo "Uploading JSON to Artifactory"
-JSON_MD5_CHECKSUM=$(echo $UPDATED_JSON | md5 -q)
-JSON_SHA1_CHECKSUM=$(echo $UPDATED_JSON | shasum -a 1 | awk '{ print $1 }')
-echo $UPDATED_JSON | curl -u$ARTIFACTORY_USER:$ARTIFACTORY_PASSWORD --http1.1 -T - --header "X-Checksum-MD5:${JSON_MD5_CHECKSUM}" --header "X-Checksum-Sha1:${JSON_SHA1_CHECKSUM}" "$JSON_URL"
+echo $UPDATED_JSON
+echo $UPDATED_JSON | curl -u$ARTIFACTORY_USER:$ARTIFACTORY_PASSWORD -T - "$JSON_URL"
 
