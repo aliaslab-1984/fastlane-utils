@@ -55,7 +55,7 @@ get_repository_name() {
 
 get_current_index_json() {
   SEPARATOR="RET_CODE"
-  CURL_OUTPUT=$(curl -u$1:$2 -s -w "\n$SEPARATOR %{http_code}\n" "$3") || exit $?
+  CURL_OUTPUT=$(curl -u$1:${2} -s -w "\n$SEPARATOR%{http_code}\n" "$3") || exit $?
   RETURN_CODE="${CURL_OUTPUT##*$SEPARATOR}"
   case $RETURN_CODE in
     "200") DOWNLOADED_JSON="${CURL_OUTPUT%$SEPARATOR*}"; echo $DOWNLOADED_JSON;;
