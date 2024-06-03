@@ -55,7 +55,7 @@ get_repository_name() {
 
 get_current_index_json() {
   SEPARATOR="RET_CODE"
-  CURL_OUTPUT=$(curl -u$1:$2 -s -w "\n$SEPARATOR%{http_code}\n" "$3") || exit $?
+  CURL_OUTPUT=$(curl -u$1:$2 -s -w "\n$SEPARATOR %{http_code}\n" "$3") || exit $?
   RETURN_CODE="${CURL_OUTPUT##*$SEPARATOR}"
   case $RETURN_CODE in
     "200") DOWNLOADED_JSON="${CURL_OUTPUT%$SEPARATOR*}"; echo $DOWNLOADED_JSON;;
@@ -156,6 +156,7 @@ ARTIFACT_PATH=$ARTIFACTORY_URL/$REPOSITORY_NAME/$TARGET_TYPE/$VERSION_STRING
 ARTIFACT_URL=$ARTIFACT_PATH/${FRAMEWORK_NAME}.${XC_PREFIX}framework.zip
 JSON_URL=$ARTIFACTORY_URL/$REPOSITORY_NAME/$TARGET_TYPE/$FRAMEWORK_NAME.json
 echo "Downloading $JSON_URL..."
+echo "Check Nexus password"
 
 ORIGINAL_INDEX_JSON=$(get_current_index_json "$ARTIFACTORY_USER" "$ARTIFACTORY_PASSWORD" "$JSON_URL") || exit $?
 JSON_VERSION=${VERSION_STRING%"-SNAPSHOT"}
