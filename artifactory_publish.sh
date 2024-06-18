@@ -128,7 +128,7 @@ ARTIFACTORY_URL=$(require_gradle_property "nexusURL") || exit $?
 ARTIFACTORY_USER=$(require_gradle_property "nexusUser") || exit $?
 ARTIFACTORY_PASSWORD=$(require_gradle_property "nexusPassword") || exit $?
 
-echo "Artifactory credentials retrieved successfully"
+echo "Repository credentials retrieved successfully"
 
 FRAMEWORK_NAME=$(require_property "$CONFIG_FILE_PATH" "frameworkName") || exit $?
 FRAMEWORK_FILE="$FRAMEWORK_PATH/${FRAMEWORK_NAME}.${XC_PREFIX}framework"
@@ -181,7 +181,7 @@ check_artifactory_response "$CURL_OUTPUT" || exit $?
 CURL_OUTPUT=$(curl -u$ARTIFACTORY_USER:$ARTIFACTORY_PASSWORD -T "${MD5}" "$ARTIFACT_PATH/$MD5")
 CURL_OUTPUT=$(curl -u$ARTIFACTORY_USER:$ARTIFACTORY_PASSWORD -T "${SHA1}" "$ARTIFACT_PATH/$SHA1")
 
-echo "Uploading JSON to Artifactory"
+echo "Uploading JSON to Repository"
 CURL_OUTPUT=$(echo $UPDATED_JSON | curl -u$ARTIFACTORY_USER:$ARTIFACTORY_PASSWORD -T - "$JSON_URL")
 # check_artifactory_response "$CURL_OUTPUT" || exit $?
 
