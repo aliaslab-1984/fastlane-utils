@@ -132,7 +132,7 @@ platform :ios do
     end
   end
 
-  desc "Publishes the SDK framework to Artifactory"
+  desc "Publishes the SDK framework to the company artifact repository"
   private_lane :deploy_framework do |options|
     config_path = options[:config_path]
     framework_path = options[:framework_path]
@@ -208,7 +208,7 @@ platform :ios do
     end
   end
 
-  desc "Publishes the framework to Artifactory"
+  desc "Publishes the framework to the company artifact repository"
   private_lane :deploy_built_framework do |options|
     framework_path = built_framework_path(sdk_project_directory: options[:sdk_project_directory])
     config_path = get_artifactory_config(config_name: options[:config_name])
