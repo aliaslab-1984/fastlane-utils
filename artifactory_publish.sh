@@ -124,9 +124,9 @@ if [ -z "$FRAMEWORK_PATH" ]; then
   exit 1
 fi
 
-ARTIFACTORY_URL=$(require_gradle_property "nexusURL") || exit $?
-ARTIFACTORY_USER=$(require_gradle_property "nexusUser") || exit $?
-ARTIFACTORY_PASSWORD=$(require_gradle_property "nexusPassword") || exit $?
+ARTIFACTORY_URL="https://nexus.ts-paas.com/repository/trust-mobile-raw"
+ARTIFACTORY_USER=$NEXUS_CI_USER
+ARTIFACTORY_PASSWORD=$NEXUS_CI_PWD
 
 echo "Repository credentials retrieved successfully"
 
