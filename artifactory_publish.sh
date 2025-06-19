@@ -128,7 +128,7 @@ ARTIFACTORY_URL="https://nexus.ts-paas.com/repository/trust-mobile-raw"
 ARTIFACTORY_USER=$NEXUS_CI_IOS_USER
 ARTIFACTORY_PASSWORD=$NEXUS_CI_IOS_PWD
 
-echo "Repository credentials retrieved successfully"
+echo "Repository credentials retrieved successfully for user: $ARTIFACTORY_USER"
 
 FRAMEWORK_NAME=$(require_property "$CONFIG_FILE_PATH" "frameworkName") || exit $?
 FRAMEWORK_FILE="$FRAMEWORK_PATH/${FRAMEWORK_NAME}.${XC_PREFIX}framework"
