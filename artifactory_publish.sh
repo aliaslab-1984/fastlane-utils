@@ -125,8 +125,8 @@ if [ -z "$FRAMEWORK_PATH" ]; then
 fi
 
 ARTIFACTORY_URL="https://nexus.ts-paas.com/repository/trust-mobile-raw"
-ARTIFACTORY_USER=$NEXUS_CI_USER
-ARTIFACTORY_PASSWORD=$NEXUS_CI_PWD
+ARTIFACTORY_USER=$NEXUS_CI_IOS_USER
+ARTIFACTORY_PASSWORD=$NEXUS_CI_IOS_PWD
 
 echo "Repository credentials retrieved successfully"
 
