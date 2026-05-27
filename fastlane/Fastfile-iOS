@@ -108,13 +108,15 @@ platform :ios do
       puts ex
     end
 
-    # TODO: esiste un plugin per fastlane (da provare con Xcode 11): https://github.com/TitouanVanBelle/fastlane-plugin-xchtmlreport
-    Dir.chdir("..") do
-      sh "xchtmlreport -r #{"\"" + derived_data_path + "\"/Logs/Test/*.xcresult/"}"
-    end
+    unless options[:skip_coverage]
+      # TODO: esiste un plugin per fastlane (da provare con Xcode 11): https://github.com/TitouanVanBelle/fastlane-plugin-xchtmlreport
+      Dir.chdir("..") do
+        sh "xchtmlreport -r #{"\"" + derived_data_path + "\"/Logs/Test/*.xcresult/"}"
+      end
 
-    options[:derived_data_path] = derived_data_path
-    extract_coverage(options) unless options[:skip_coverage]
+      options[:derived_data_path] = derived_data_path
+      extract_coverage(options)
+    end
 
     if failedScan
       UI.error "Scan failed"
