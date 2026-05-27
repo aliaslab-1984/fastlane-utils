@@ -95,19 +95,31 @@ platform :ios do
   private_lane :test_prj do |options|
     derived_data_path = options[:project_directory] + "/Build/"
     clear_derived_data(derived_data_path: derived_data_path)
-    scan(project: options[:project],
-       scheme: options[:scheme],
-       clean: true,
-       code_coverage: true,
-       derived_data_path: derived_data_path)
+    failedScan = false
+
+    begin
+      scan(project: options[:project],
+         scheme: options[:scheme],
+         clean: true,
+         code_coverage: true,
+         derived_data_path: derived_data_path)
+    rescue => ex
+      failedScan = true
+      puts ex
+    end
 
     # TODO: esiste un plugin per fastlane (da provare con Xcode 11): https://github.com/TitouanVanBelle/fastlane-plugin-xchtmlreport
     Dir.chdir("..") do
-   	  sh "xchtmlreport -r #{"\"" + derived_data_path + "\"/Logs/Test/*.xcresult/"}"
+      sh "xchtmlreport -r #{"\"" + derived_data_path + "\"/Logs/Test/*.xcresult/"}"
     end
 
     options[:derived_data_path] = derived_data_path
     extract_coverage(options) unless options[:skip_coverage]
+
+    if failedScan
+      UI.error "Scan failed"
+      raise 'Scan failed'
+    end
   end
 
   desc "Builds and archives the specified scheme"
