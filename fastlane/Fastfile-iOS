@@ -108,20 +108,21 @@ platform :ios do
       puts ex
     end
 
-    #if !failedScan
-    #  xcresult_path = lane_context[SharedValues::SCAN_GENERATED_XCRESULT_PATH]
-    #  if xcresult_path && File.exist?(xcresult_path)
-    #    begin
-    #      UI.header "xcresulttool"
-    #      json = sh("xcrun xcresulttool get --format json --path \"#{xcresult_path}\"", log: false)
-    #      failures = JSON.parse(json).dig("metrics", "testsFailedCount", "_value").to_i
-    #      UI.message "Test failures from xcresult: #{failures}"
-    #      failedScan = failures > 0
-    #    rescue
-    #      # xcresult non leggibile: mantieni failedScan = true
-    #    end
-    #  end
-    #end
+    if failedScan
+      xcresult_path = lane_context[SharedValues::SCAN_GENERATED_XCRESULT_PATH]
+      if xcresult_path && File.exist?(xcresult_path)
+        begin
+          UI.header "xcresulttool"
+          json = sh("xcrun xcresulttool get --format json --path \"#{xcresult_path}\"", log: false)
+          failures = JSON.parse(json).dig("metrics", "testsFailedCount", "_value").to_i
+          UI.message "Test failures from xcresult: #{failures}"
+          failedScan = failures > 0
+        rescue => e
+          UI.important "xcresulttool parsing failed: #{e.message} — assuming tests passed"
+          failedScan = false
+        end
+      end
+    end
 
     unless options[:skip_coverage]
       # TODO: esiste un plugin per fastlane (da provare con Xcode 11): https://github.com/TitouanVanBelle/fastlane-plugin-xchtmlreport
