@@ -102,7 +102,8 @@ platform :ios do
          scheme: options[:scheme],
          clean: true,
          code_coverage: true,
-         derived_data_path: derived_data_path)
+         derived_data_path: derived_data_path,
+         buildlog_path: derived_data_path + "/Logs/")
     rescue => ex
       failedScan = true
       puts ex
@@ -113,7 +114,7 @@ platform :ios do
       if xcresult_path && File.exist?(xcresult_path)
         begin
           UI.header "xcresulttool"
-          json = sh("xcrun xcresulttool get --format json --path \"#{xcresult_path}\"", log: false)
+          json = sh("xcrun xcresulttool get --format json --legacy --path \"#{xcresult_path}\"", log: false)
           failures = JSON.parse(json).dig("metrics", "testsFailedCount", "_value").to_i
           UI.message "Test failures from xcresult: #{failures}"
           failedScan = failures > 0
